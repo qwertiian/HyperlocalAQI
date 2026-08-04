@@ -441,8 +441,9 @@ Respond ONLY with a valid JSON object (no markdown, no backticks) with these exa
 }
 
 // Grounded LLM Health Advisory (Groq LLaMA 3.1 8B Cloud API / Ollama / Dynamic Fallback)
-app.get("/api/advisory", async (req, res) => {
-  const { aqi = 50, age = "adult", respiratory = "false", cardiac = "false", pregnant = "false", activity = "moderate" } = req.query;
+app.all("/api/advisory", async (req, res) => {
+  const params = req.method === "POST" ? (req.body || {}) : req.query;
+  const { aqi = 50, age = "adult", respiratory = "false", cardiac = "false", pregnant = "false", activity = "moderate" } = params;
 
   const isResp = respiratory === "true" || respiratory === true;
   const isCard = cardiac === "true" || cardiac === true;
