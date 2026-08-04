@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Hyperlocal AI Air Quality Platform — All-India Coverage & Intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!-- Leaflet & Chart.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  :root {
+    --bg-main: #f4f6fb;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(255, 255, 255, 0.7);
+    --card-shadow: 0 10px 30px -5px rgba(148, 163, 184, 0.12), 0 4px 12px -2px rgba(148, 163, 184, 0.08);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent-purple: #8b5cf6;
+    --accent-blue: #3b82f6;
+    --accent-pink: #ec4899;
+    
+    /* AQI Colors */
+    --good: #10b981;
+    --satisfactory: #84cc16;
+    --moderate: #eab308;
+    --poor: #f97316;
+    --verypoor: #ef4444;
+    --severe: #881337;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Ambient Soft Blur Mesh Spheres */
+  .ambient-bg {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .sphere-1 {
+    position: absolute;
+    top: -100px;
+    left: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(244, 246, 251, 0) 70%);
+    filter: blur(50px);
+  }
+  .sphere-2 {
+    position: absolute;
+    bottom: -150px;
+    right: 300px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(244, 246, 251, 0) 70%);
+    filter: blur(60px);
+  }
+
+  /* Top Navigation Bar */
+  header {
+    z-index: 10;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-icon {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.25);
+  }
+  .brand h1 {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+  }
+  .brand p {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .nav-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(241, 245, 249, 0.8);
+    padding: 4px;
+    border-radius: 30px;
+    border: 1px solid rgba(203, 213, 225, 0.6);
+  }
+  .nav-pill-btn {
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .nav-pill-btn.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #059669;
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.6; }
+  }
+
+  /* Metro Stock Ticker Bar */
+  .ticker-bar {
+    z-index: 9;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .ticker-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-purple);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 14px;
+    border-right: 2px solid rgba(203, 213, 225, 0.6);
+  }
+  .metro-chip {
+    background: white;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    padding: 7px 14px;
+    border-radius: 24px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .metro-chip:hover, .metro-chip.active {
+    border-color: var(--accent-purple);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.15);
+  }
+  .metro-chip .city-name { font-weight: 700; color: var(--text-primary); }
+  .metro-chip .aqi-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: white;
+  }
+  .trend-up { color: #ef4444; font-weight: 700; font-size: 11px; }
+  .trend-down { color: #10b981; font-weight: 700; font-size: 11px; }
+
+  /* Main Workspace */
+  .main-layout {
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    height: calc(100vh - 125px);
+    padding: 16px 24px 24px;
+    gap: 20px;
+  }
+
+  /* Map Container */
+  .map-wrapper {
+    flex: 1.2;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  #map {
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+  }
+
+  /* Floating Map Search & Click Tracker Banner */
+  .map-overlay-card {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 500;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .map-overlay-card input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    width: 220px;
+  }
+  
+  .click-banner {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(16px);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    pointer-events: none;
+  }
+
+  /* Right Dashboard Sidebar Panel */
+  .sidebar-panel {
+    flex: 1;
+    background: var(--card-bg);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
+    gap: 18px;
+  }
+
+  /* Tabs inside sidebar */
+  .tab-nav {
+    display: flex;
+    background: rgba(241, 245, 249, 0.8);
+    padding: 4px;
+    border-radius: 16px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab-btn.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .tab-content { display: none; flex-direction: column; gap: 16px; }
+  .tab-content.active { display: flex; }
+
+  /* Sub-cards */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Persona Card Grid */
+  .persona-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .persona-btn {
+    background: white;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    padding: 10px 8px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .persona-btn:hover, .persona-btn.active {
+    border-color: var(--accent-purple);
+    background: rgba(139, 92, 246, 0.05);
+    transform: translateY(-2px);
+  }
+  .persona-icon { font-size: 20px; }
+  .persona-title { font-size: 11px; font-weight: 700; color: var(--text-primary); }
+
+  .cond-chip {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .cond-chip:hover, .cond-chip.active {
+    border-color: var(--accent-purple);
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-purple);
+    font-weight: 800;
+  }
+
+  /* Primary Action Button */
+  .btn-action {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
+    transition: all 0.2s ease;
+  }
+  .btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(139, 92, 246, 0.35);
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+  .btn-secondary:hover {
+    background: rgba(241, 245, 249, 0.8);
+    border-color: var(--accent-purple);
+  }
+
+  /* Form Selects */
+  select, input[type=number] {
+    width: 100%;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  /* Pollutant Bars */
+  .pollutant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .pollutant-box {
+    background: white;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+  .pollutant-name { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+  .pollutant-val { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 2px; }
+
+  /* Output Card Formatting */
+  .advisory-card {
+    background: white;
+    border-left: 4px solid var(--accent-purple);
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+    margin-top: 14px;
+    white-space: pre-line;
+  }
+
+  /* Chart Container */
+  .chart-wrapper {
+    position: relative;
+    height: 220px;
+    width: 100%;
+  }
+
+  /* Custom Leaflet Map Controls */
+  .leaflet-popup-content-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    color: #0f172a;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient-bg">
+  <div class="sphere-1"></div>
+  <div class="sphere-2"></div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">✨</div>
+    <div>
+      <h1>Hyperlocal AI Air Quality Platform</h1>
+      <p>Nationwide India Real-Time Fusion • Click-Anywhere Kriging • Ollama LLM</p>
+    </div>
+  </div>
+  <div class="nav-pills">
+    <button class="nav-pill-btn active">🌐 All-India Coverage</button>
+    <button class="nav-pill-btn" onclick="flyToCity(21.1458, 79.0882, 'Nagpur')">📍 Nagpur Base</button>
+  </div>
+  <div class="status-badge">
+    <div class="pulse-dot"></div>
+    <span id="sysStatus">Postgres Cloud • Nationwide Active</span>
+  </div>
+</header>
+
+<!-- Stock Ticker -->
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-label">
+    <span>🔥 METROS AQI</span>
+  </div>
+  <!-- Chips inserted dynamically -->
+</div>
+
+<!-- Main Split Container -->
+<div class="main-layout">
+  <!-- Left Map Wrapper -->
+  <div class="map-wrapper">
+    <div class="map-overlay-card">
+      <span style="font-size:16px;">🔍</span>
+      <input type="text" id="citySearch" list="citiesList" placeholder="Search any city in India..." onchange="onCitySelected()" />
+      <datalist id="citiesList"></datalist>
+    </div>
+    <div class="click-banner">
+      <span>📍 Click ANY spot on the map in India for real-time spatial AQI interpolation</span>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <!-- Right Dashboard Panel -->
+  <div class="sidebar-panel">
+    <!-- Tab Controls -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-forecast')">📈 Analytics</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-copilot')">🤖 AI Copilot</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-egov')">🏛️ E-Governance & EIA</button>
+    </div>
+
+    <!-- TAB 1: Forecast & Live Analytics -->
+    <div id="tab-forecast" class="tab-content active">
+      <!-- Active Location Summary Card -->
+      <div class="glass-card" style="border-color: rgba(139, 92, 246, 0.4);">
+        <div class="card-title">
+          <span>Active Location AQI</span>
+          <span id="activeCityTag" style="color:var(--accent-purple); font-weight:800; font-size:13px;">Nagpur</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
+          <div>
+            <div style="font-size:32px; font-weight:800;" id="activeAqiVal">208</div>
+            <div style="font-size:12px; font-weight:700; color:#f97316;" id="activeCategory">Poor Air Quality</div>
+          </div>
+          <div style="text-align:right; font-size:12px; color:var(--text-secondary);">
+            <div>Nearest Station:</div>
+            <div style="font-weight:700;" id="nearestStationName">Civil Lines</div>
+            <div style="color:var(--text-muted); font-size:11px;" id="nearestStationDist">0.4 km away</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <span>72-Hour Prophet AI Forecast</span>
+          <span style="color:var(--text-muted); font-size:11px;">Time-Series Trajectory</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="forecastChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Live Pollutant Breakdown -->
+      <div class="glass-card">
+        <div class="card-title">Pollutant Concentrations</div>
+        <div class="pollutant-grid">
+          <div class="pollutant-box">
+            <div class="pollutant-name">PM 2.5</div>
+            <div class="pollutant-val" id="pm25Val">93.6 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+          </div>
+          <div class="pollutant-box">
+            <div class="pollutant-name">PM 10</div>
+            <div class="pollutant-val" id="pm10Val">156.0 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+          </div>
+          <div class="pollutant-box">
+            <div class="pollutant-name">NO2</div>
+            <div class="pollutant-val" id="no2Val">42.1 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+          </div>
+          <div class="pollutant-box">
+            <div class="pollutant-name">SO2</div>
+            <div class="pollutant-val" id="so2Val">14.5 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Open-Meteo Weather Card -->
+      <div class="glass-card" id="weatherCard" style="background: linear-gradient(135deg, rgba(241, 245, 249, 0.9), rgba(243, 244, 246, 0.9));">
+        <div class="card-title">
+          <span>🌤️ Real-Time Meteorology <span style="font-size:10px; font-weight:600; color:#10b981; background:rgba(16,185,129,0.1); padding:2px 8px; border-radius:8px;">Open-Meteo Live</span></span>
+          <span id="weatherLocation" style="font-size:11px; font-weight:600; color:var(--text-muted);"></span>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);">🌡️ TEMPERATURE</div>
+            <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wTemp">—</div>
+          </div>
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);">💧 HUMIDITY</div>
+            <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wHumidity">—</div>
+          </div>
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);">💨 WIND</div>
+            <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wWind">—</div>
+          </div>
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);">📐 PRESSURE</div>
+            <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wPressure">—</div>
+          </div>
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);">☀️ UV INDEX</div>
+            <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wUV">—</div>
+          </div>
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);">🏔️ BOUNDARY LAYER</div>
+            <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wBLH">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: AI Health Copilot -->
+    <div id="tab-copilot" class="tab-content">
+      <!-- User Health Profile Selector -->
+      <div class="glass-card">
+        <div class="card-title">
+          <span>👤 Patient & Persona Profile</span>
+          <span style="font-size:10px; font-weight:700; color:var(--accent-purple); background:rgba(139,92,246,0.1); padding:3px 8px; border-radius:8px;">Ollama LLaMA 3.1 8B</span>
+        </div>
+        
+        <!-- Age Band Selection -->
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Age Group</div>
+        <div class="persona-grid" style="margin-bottom:12px;">
+          <div class="persona-btn active" id="age-adult" onclick="selectAge('adult')">
+            <span class="persona-icon">👤</span>
+            <span class="persona-title">Adult</span>
+          </div>
+          <div class="persona-btn" id="age-child" onclick="selectAge('child')">
+            <span class="persona-icon">🧒</span>
+            <span class="persona-title">Child</span>
+          </div>
+          <div class="persona-btn" id="age-elderly" onclick="selectAge('elderly')">
+            <span class="persona-icon">👴</span>
+            <span class="persona-title">Senior (60+)</span>
+          </div>
+        </div>
+
+        <!-- Medical Condition Toggles -->
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Pre-existing Medical Conditions</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+          <button type="button" class="cond-chip" id="cond-asthma" onclick="toggleCondition('asthma')">🫁 Asthma / Respiratory</button>
+          <button type="button" class="cond-chip" id="cond-cardiac" onclick="toggleCondition('cardiac')">🫀 Heart / Cardiac</button>
+          <button type="button" class="cond-chip" id="cond-pregnant" onclick="toggleCondition('pregnant')">🤰 Pregnant</button>
+        </div>
+
+        <!-- Activity Level Selection -->
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Planned Activity Level</div>
+        <div class="persona-grid" style="margin-bottom:14px;">
+          <div class="persona-btn active" id="act-moderate" onclick="selectActivity('moderate')">
+            <span class="persona-icon">🚶</span>
+            <span class="persona-title">Light Walk</span>
+          </div>
+          <div class="persona-btn" id="act-sedentary" onclick="selectActivity('sedentary')">
+            <span class="persona-icon">🛋️</span>
+            <span class="persona-title">Indoors / Rest</span>
+          </div>
+          <div class="persona-btn" id="act-athlete" onclick="selectActivity('athlete')">
+            <span class="persona-icon">🏃</span>
+            <span class="persona-title">Outdoor Exercise</span>
+          </div>
+          <div class="persona-btn" id="act-worker" onclick="selectActivity('outdoor_worker')">
+            <span class="persona-icon">🛠️</span>
+            <span class="persona-title">Outdoor Labor</span>
+          </div>
+        </div>
+
+        <!-- Location AQI Input -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Target Location AQI</label>
+          <span style="font-size:11px; font-weight:600; color:var(--accent-blue);" id="copilotLocationTag">Nagpur Base</span>
+        </div>
+        <input type="number" id="aqiInput" value="208" style="font-size:16px; font-weight:800; font-family:'JetBrains Mono', monospace;" />
+
+        <button class="btn-action" onclick="generateAIAdvisory()">⚡ Generate Pulmonology Health Guidance</button>
+      </div>
+
+      <!-- Structured Advisory Result Output Card -->
+      <div id="advisoryOut" style="display:none; margin-top:14px;">
+        <!-- Filled dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB 3: E-Governance & Civil EIA -->
+    <div id="tab-egov" class="tab-content">
+      <!-- CPCB GRAP Policy Action Engine -->
+      <div class="glass-card">
+        <div class="card-title">
+          <span>🏛️ GRAP E-Governance Action Engine</span>
+          <span style="font-size:10px; font-weight:700; color:#3b82f6; background:rgba(59,130,246,0.1); padding:3px 8px; border-radius:8px;">CPCB Standards</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+          Municipal policy triggers based on current & forecast air quality levels:
+        </div>
+
+        <button class="btn-action" onclick="loadGrapPolicy()" style="background:linear-gradient(135deg, #059669, #10b981);">
+          📋 Trigger Municipal GRAP Policy Actions
+        </button>
+
+        <div id="grapResultCard" style="margin-top:12px; display:none;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Civil Engineering EIA Site Simulator -->
+      <div class="glass-card">
+        <div class="card-title">
+          <span>🏗️ Civil Infrastructure EIA Simulator</span>
+          <span style="font-size:10px; font-weight:700; color:#f59e0b; background:rgba(245,158,11,0.1); padding:3px 8px; border-radius:8px;">Environmental Impact Assessment</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+          Simulate construction dust & microclimate AQI surge for proposed projects:
+        </div>
+
+        <label style="font-size:11px; font-weight:700; color:var(--text-muted);">PROJECT TYPE</label>
+        <select id="eiaProjectType">
+          <option value="highway">🛣️ Highway Expansion / Corridor</option>
+          <option value="commercial">🏢 Commercial Complex / Mall</option>
+          <option value="industrial">🏭 Industrial Zone / Manufacturing</option>
+          <option value="residential">🏡 Residential Township</option>
+        </select>
+
+        <button class="btn-action" onclick="runEiaSimulation()" style="background:linear-gradient(135deg, #d97706, #f59e0b);">
+          ⚙️ Run Civil EIA Impact Assessment
+        </button>
+
+        <div id="eiaResultCard" style="margin-top:12px; display:none;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:4000/api";
+let map, forecastChart, clickPinMarker;
+let allCitiesList = [];
+
+function getAqiColor(v) {
+  if (v <= 50) return "#10b981";
+  if (v <= 100) return "#84cc16";
+  if (v <= 200) return "#eab308";
+  if (v <= 300) return "#f97316";
+  if (v <= 400) return "#ef4444";
+  return "#881337";
+}
+
+function switchTab(btn, tabId) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  
+  if (btn) btn.classList.add("active");
+  const target = document.getElementById(tabId);
+  if (target) target.classList.add("active");
+}
+
+function selectPersona(ageGroup, isAsthma, isPregnant) {
+  document.querySelectorAll(".persona-btn").forEach(b => b.classList.remove("active"));
+  event.currentTarget.classList.add("active");
+  
+  window.selectedAge = ageGroup;
+  window.selectedAsthma = isAsthma;
+  window.selectedPregnant = isPregnant;
+}
+
+function initMap() {
+  map = L.map("map", { zoomControl: false }).setView([21.1458, 79.0882], 5);
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
+  // CartoDB Positron Voyager (Soft Light Tiles)
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+    maxZoom: 18,
+  }).addTo(map);
+
+  // Click-Anywhere-on-Map Nationwide Tracking
+  map.on("click", async (e) => {
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+
+    if (clickPinMarker) map.removeLayer(clickPinMarker);
+
+    clickPinMarker = L.marker([lat, lon]).addTo(map)
+      .bindPopup(`📍 Querying AQI at (${lat.toFixed(3)}, ${lon.toFixed(3)})...`)
+      .openPopup();
+
+    try {
+      const res = await fetch(`${API_BASE}/aqi/interpolate?lat=${lat}&lon=${lon}`);
+      const data = await res.json();
+
+      if (data.noData) {
+        clickPinMarker.setPopupContent(`
+          <div style="padding:4px;">
+            <div style="font-size:13px; font-weight:700; color:#64748b;">⚠️ No Station Data</div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:4px;">No CPCB monitoring station within 300 km.</div>
+            ${data.nearestStation ? `<div style="font-size:11px; margin-top:4px;">Nearest: ${data.nearestStation.name} (${data.nearestStation.distanceKm} km)</div>` : ''}
+          </div>
+        `).openPopup();
+      } else {
+        const stationCount = data.stationsUsed || '';
+        clickPinMarker.setPopupContent(`
+          <div style="padding:4px;">
+            <div style="font-size:12px; font-weight:700; color:#64748b;">📍 Interpolated AQI (IDW)</div>
+            <div style="font-size:20px; font-weight:800; color:${data.color}; margin-top:2px;">${data.aqi} <span style="font-size:13px;">${data.category}</span></div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:3px;">Nearest: <b>${data.nearestStation.name}</b></div>
+            <div style="font-size:11px; color:#94a3b8;">${data.nearestStation.city} · ${data.nearestStation.distanceKm} km away</div>
+          </div>
+        `).openPopup();
+        updateActiveLocation(data);
+        loadWeather(lat, lon, data.nearestStation ? data.nearestStation.city : '');
+      }
+    } catch (err) {
+      console.error("Interpolation error", err);
+    }
+  });
+}
+
+function updateActiveLocation(data) {
+  if (!data || data.noData) return;
+  const tag = document.getElementById("activeCityTag");
+  if (tag && data.nearestStation) tag.textContent = data.nearestStation.city || "Selected Location";
+  
+  const copilotTag = document.getElementById("copilotLocationTag");
+  if (copilotTag && data.nearestStation) copilotTag.textContent = data.nearestStation.city || "Selected Location";
+  
+  const aqiIn = document.getElementById("aqiInput");
+  if (aqiIn && data.aqi != null) aqiIn.value = data.aqi;
+  
+  document.getElementById("activeAqiVal").textContent = data.aqi;
+  document.getElementById("activeAqiVal").style.color = data.color;
+  document.getElementById("activeCategory").textContent = `${data.category} Air Quality`;
+  document.getElementById("activeCategory").style.color = data.color;
+
+  if (data.nearestStation) {
+    document.getElementById("nearestStationName").textContent = data.nearestStation.name;
+    document.getElementById("nearestStationDist").textContent = `${data.nearestStation.distanceKm} km away`;
+  }
+
+  if (data.pollutants) {
+    document.getElementById("pm25Val").innerHTML = `${data.pollutants.pm25} <span style="font-size:11px; color:var(--text-muted);">µg/m³</span>`;
+    document.getElementById("pm10Val").innerHTML = `${data.pollutants.pm10} <span style="font-size:11px; color:var(--text-muted);">µg/m³</span>`;
+    document.getElementById("no2Val").innerHTML = `${data.pollutants.no2} <span style="font-size:11px; color:var(--text-muted);">µg/m³</span>`;
+    document.getElementById("so2Val").innerHTML = `${data.pollutants.so2} <span style="font-size:11px; color:var(--text-muted);">µg/m³</span>`;
+  }
+
+  document.getElementById("aqiInput").value = data.aqi;
+  // Auto-switch to forecast tab to show analytics
+  document.querySelectorAll('.tab-btn')[0].click();
+}
+
+// Wind direction helper
+function windDirLabel(deg) {
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+async function loadWeather(lat, lon, label) {
+  try {
+    const res = await fetch(`${API_BASE}/weather/live?lat=${lat}&lon=${lon}`);
+    const w = await res.json();
+    document.getElementById('wTemp').textContent = w.temperature_c != null ? `${w.temperature_c}°C` : '—';
+    document.getElementById('wHumidity').textContent = w.humidity_pct != null ? `${w.humidity_pct}%` : '—';
+    document.getElementById('wWind').textContent = w.wind_speed_ms != null ? `${w.wind_speed_ms} m/s ${w.wind_dir_deg != null ? windDirLabel(w.wind_dir_deg) : ''}` : '—';
+    document.getElementById('wPressure').textContent = w.pressure_hpa != null ? `${w.pressure_hpa} hPa` : '—';
+    document.getElementById('wUV').textContent = w.uv_index != null ? w.uv_index : '—';
+    document.getElementById('wBLH').textContent = w.boundary_layer_height_m != null ? `${w.boundary_layer_height_m} m` : '—';
+    if (label) document.getElementById('weatherLocation').textContent = label;
+  } catch(e) { console.warn('Weather fetch failed', e); }
+}
+
+function flyToCity(lat, lon, cityName) {
+  map.flyTo([lat, lon], 11, { duration: 1.5 });
+}
+
+async function loadCitiesDirectory() {
+  try {
+    const res = await fetch(`${API_BASE}/aqi/cities`);
+    const data = await res.json();
+    allCitiesList = data.cities || [];
+
+    const datalist = document.getElementById("citiesList");
+    datalist.innerHTML = "";
+    allCitiesList.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.city;
+      datalist.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("Could not load cities directory", e);
+  }
+}
+
+function onCitySelected() {
+  const val = document.getElementById("citySearch").value.trim().toLowerCase();
+  const found = allCitiesList.find(c => c.city.toLowerCase() === val);
+  if (found) {
+    flyToCity(found.lat, found.lon, found.city);
+    document.getElementById("aqiInput").value = found.aqi;
+    document.getElementById("activeCityTag").textContent = found.city;
+    document.getElementById("activeAqiVal").textContent = found.aqi;
+    document.getElementById("activeAqiVal").style.color = found.color;
+  }
+}
+
+async function loadMetrosTicker() {
+  try {
+    const res = await fetch(`${API_BASE}/aqi/metros`);
+    const data = await res.json();
+    const container = document.getElementById("tickerBar");
+
+    container.querySelectorAll(".metro-chip").forEach(c => c.remove());
+
+    for (const m of data.metros) {
+      // Enrich with live AQI
+      let liveVal = m.aqi;
+      let liveColor = m.color;
+      try {
+        const liveRes = await fetch(`${API_BASE}/aqi/interpolate?lat=${m.lat}&lon=${m.lon}`);
+        const liveData = await liveRes.json();
+        if (liveData && liveData.aqi) {
+          liveVal = liveData.aqi;
+          liveColor = liveData.color;
+        }
+      } catch(e) {}
+
+      const chip = document.createElement("div");
+      chip.className = "metro-chip";
+      if (m.city === "Nagpur") chip.classList.add("active");
+
+      const arrow = m.trend === "up" ? "▲" : "▼";
+      const trendClass = m.trend === "up" ? "trend-up" : "trend-down";
+
+      chip.innerHTML = `
+        <span class="city-name">${m.city}</span>
+        <span class="aqi-badge" style="background:${liveColor}">${liveVal}</span>
+        <span class="${trendClass}">${arrow} ${m.changePct}%</span>
+      `;
+
+      chip.onclick = () => {
+        document.querySelectorAll(".metro-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        flyToCity(m.lat, m.lon, m.city);
+        document.getElementById("aqiInput").value = liveVal;
+        document.getElementById("activeCityTag").textContent = m.city;
+        document.getElementById("activeAqiVal").textContent = liveVal;
+        document.getElementById("activeAqiVal").style.color = liveColor;
+      };
+
+      container.appendChild(chip);
+    }
+  } catch (e) {
+    console.error("Could not load metros ticker", e);
+  }
+}
+
+async function loadSpatialGrid() {
+  try {
+    const res = await fetch(`${API_BASE}/aqi/grid`);
+    const data = await res.json();
+
+    // Draw soft IDW halo cells (radius scales with zoom level)
+    if (data.grid && data.grid.length) {
+      data.grid.forEach(cell => {
+        L.circle([cell.lat, cell.lon], {
+          radius: 30000,  // ~30 km halos
+          color: getAqiColor(cell.aqi),
+          fillColor: getAqiColor(cell.aqi),
+          fillOpacity: 0.12,
+          stroke: false,
+        }).addTo(map);
+      });
+    }
+
+    // Station markers with rich popup
+    if (data.stations && data.stations.length) {
+      // Update status badge with station count
+      document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Stations • Postgres • Nationwide`;
+
+      data.stations.forEach(s => {
+        const color = getAqiColor(s.value);
+        L.circleMarker([s.lat, s.lon], {
+          radius: 6,
+          color: "#ffffff",
+          weight: 1.5,
+          fillColor: color,
+          fillOpacity: 1,
+        }).addTo(map)
+          .bindPopup(`
+            <div style="padding:4px; min-width:160px;">
+              <div style="font-size:13px; font-weight:700; color:#0f172a; line-height:1.3;">${s.name || s.station_id}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">📍 ${s.city || 'India'}</div>
+              <div style="font-size:22px; font-weight:800; color:${color}; margin-top:6px;">${s.value} <span style="font-size:12px; font-weight:600;">AQI</span></div>
+              <div style="font-size:11px; font-weight:700; color:${color}; margin-top:2px;">${getCategory(s.value)}</div>
+            </div>
+          `)
+          .on("click", async (e) => {
+            if (e && e.originalEvent) L.DomEvent.stopPropagation(e);
+            if (clickPinMarker) {
+              map.removeLayer(clickPinMarker);
+              clickPinMarker = null;
+            }
+            try {
+              const res = await fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`);
+              const data = await res.json();
+              updateActiveLocation(data);
+              loadWeather(s.lat, s.lon, `${s.name || s.city}, ${s.city}`);
+              loadForecastChart(s.station_id);
+            } catch(err) {
+              updateActiveLocation({ aqi: s.value, category: getCategory(s.value), color: color, nearestStation: { name: s.name, city: s.city, distanceKm: 0 } });
+            }
+          });
+      });
+    }
+  } catch (e) {
+    console.error("Could not load spatial grid", e);
+  }
+}
+
+function getCategory(aqi) {
+  if (aqi <= 50) return "Good";
+  if (aqi <= 100) return "Satisfactory";
+  if (aqi <= 200) return "Moderate";
+  if (aqi <= 300) return "Poor";
+  if (aqi <= 400) return "Very Poor";
+  return "Severe";
+}
+
+function initChart() {
+  const ctx = document.getElementById("forecastChart").getContext("2d");
+
+  const labels = [];
+  const historical = [];
+  const forecast = [];
+
+  for (let i = -24; i <= 72; i += 3) {
+    labels.push(i <= 0 ? `${i}h` : `+${i}h`);
+    if (i <= 0) {
+      historical.push(208 + Math.sin(i / 10) * 20 + Math.random() * 4);
+      forecast.push(null);
+    } else {
+      historical.push(null);
+      forecast.push(208 + Math.sin(i / 10) * 30 + i * 0.25);
+    }
+  }
+
+  forecastChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Historical AQI',
+          data: historical,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+          borderWidth: 2.5,
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: '72h Prophet AI Forecast',
+          data: forecast,
+          borderColor: '#8b5cf6',
+          borderDash: [4, 4],
+          borderWidth: 2.5,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#475569', font: { size: 11, weight: '600' } } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { color: '#64748b' } },
+        y: { grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+async function loadForecastChart(stationId) {
+  try {
+    const res = await fetch(`${API_BASE}/forecast/${stationId}`);
+    const data = await res.json();
+    if (data && data.length) {
+      const labels = data.map((d, i) => `+${i * 3}h`);
+      const values = data.map(d => d.yhat);
+
+      forecastChart.data.labels = labels;
+      forecastChart.data.datasets[1].data = values;
+      forecastChart.update();
+    }
+  } catch (e) {
+    console.error("Could not load forecast data", e);
+  }
+}
+
+let currentAge = 'adult';
+let currentActivity = 'moderate';
+let condAsthma = false;
+let condCardiac = false;
+let condPregnant = false;
+
+function selectAge(age) {
+  currentAge = age;
+  ['adult', 'child', 'elderly'].forEach(a => {
+    const el = document.getElementById(`age-${a}`);
+    if (el) el.classList.toggle('active', a === age);
+  });
+}
+
+function selectActivity(act) {
+  currentActivity = act;
+  const mapKey = { moderate: 'act-moderate', sedentary: 'act-sedentary', athlete: 'act-athlete', outdoor_worker: 'act-worker' };
+  Object.values(mapKey).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === mapKey[act]);
+  });
+}
+
+function toggleCondition(cond) {
+  if (cond === 'asthma') {
+    condAsthma = !condAsthma;
+    document.getElementById('cond-asthma').classList.toggle('active', condAsthma);
+  } else if (cond === 'cardiac') {
+    condCardiac = !condCardiac;
+    document.getElementById('cond-cardiac').classList.toggle('active', condCardiac);
+  } else if (cond === 'pregnant') {
+    condPregnant = !condPregnant;
+    document.getElementById('cond-pregnant').classList.toggle('active', condPregnant);
+  }
+}
+
+async function generateAIAdvisory() {
+  const aqiVal = parseFloat(document.getElementById("aqiInput").value) || 150;
+  const out = document.getElementById("advisoryOut");
+  out.style.display = "block";
+  out.innerHTML = `
+    <div class="glass-card" style="text-align:center; padding:24px;">
+      <div style="font-size:24px; margin-bottom:8px;">🩺</div>
+      <div style="font-weight:700; font-size:14px; color:var(--accent-purple);">Consulting Pulmonology LLM (Ollama llama3.1:8b)...</div>
+      <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Synthesizing WHO 2021 guidelines & CPCB thresholds</div>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`${API_BASE}/advisory`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        aqi: aqiVal,
+        age: currentAge,
+        activity: currentActivity,
+        respiratory: condAsthma,
+        cardiac: condCardiac,
+        pregnant: condPregnant,
+      }),
+    });
+    const data = await res.json();
+    renderAdvisoryCard(data);
+  } catch (e) {
+    out.innerHTML = `<div class="glass-card" style="color:#ef4444; font-weight:700;">⚠️ Could not reach local Ollama LLM backend on port 4000.</div>`;
+  }
+}
+
+function renderAdvisoryCard(d) {
+  const out = document.getElementById("advisoryOut");
+  const dosList = (d.dos || []).map(x => `<li style="margin-bottom:4px;">✅ ${x}</li>`).join('');
+  const dontsList = (d.donts || []).map(x => `<li style="margin-bottom:4px;">❌ ${x}</li>`).join('');
+  const warnings = (d.medical_warnings || []).map(x => `<div>🚨 ${x}</div>`).join('');
+
+  out.innerHTML = `
+    <div class="glass-card" style="border-left:5px solid ${d.risk_color || '#8b5cf6'};">
+      <!-- Risk Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:12px; font-weight:800; color:white; background:${d.risk_color}; padding:4px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px;">
+          ${d.risk_level}
+        </span>
+        <span style="font-size:11px; font-weight:700; color:var(--accent-purple); background:rgba(139,92,246,0.1); padding:3px 8px; border-radius:8px;">
+          ${d.who_guideline_multiplier || 'WHO Limit'}
+        </span>
+      </div>
+
+      <!-- Executive Advice -->
+      <div style="font-size:13.5px; line-height:1.6; font-weight:600; color:var(--text-primary); background:white; padding:12px; border-radius:12px; border:1px solid rgba(226,232,240,0.8); margin-bottom:12px;">
+        ${d.executive_summary}
+      </div>
+
+      <!-- Do's & Don'ts Grid -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+        <div style="background:rgba(16,185,129,0.06); padding:10px; border-radius:12px; border:1px solid rgba(16,185,129,0.2);">
+          <div style="font-size:11px; font-weight:800; color:#10b981; margin-bottom:6px;">RECOMMENDED DO'S</div>
+          <ul style="font-size:11.5px; line-height:1.5; color:var(--text-primary); padding-left:0; list-style:none;">
+            ${dosList}
+          </ul>
+        </div>
+        <div style="background:rgba(239,68,68,0.06); padding:10px; border-radius:12px; border:1px solid rgba(239,68,68,0.2);">
+          <div style="font-size:11px; font-weight:800; color:#ef4444; margin-bottom:6px;">AVOID DONT'S</div>
+          <ul style="font-size:11.5px; line-height:1.5; color:var(--text-primary); padding-left:0; list-style:none;">
+            ${dontsList}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Mask Spec & Warning -->
+      <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8); margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:20px;">😷</span>
+        <div>
+          <div style="font-size:10px; font-weight:700; color:var(--text-muted);">RECOMMENDED MASK TYPE</div>
+          <div style="font-size:12px; font-weight:800; color:${d.mask_color || '#3b82f6'};">${d.mask_recommendation}</div>
+        </div>
+      </div>
+
+      <!-- Warning Callout -->
+      <div style="background:rgba(249,115,22,0.08); padding:10px; border-radius:12px; border:1px solid rgba(249,115,22,0.3); font-size:11px; color:#c2410c; font-weight:600; line-height:1.5;">
+        ${warnings}
+      </div>
+
+      <!-- Print Button -->
+      <button class="btn-secondary" onclick="printMedicalReport()" style="margin-top:10px;">
+        📄 Print Patient Health PDF Summary
+      </button>
+    </div>
+  `;
+}
+
+async function loadGrapPolicy() {
+  const aqi = parseFloat(document.getElementById("aqiInput").value) || 208;
+  const city = document.getElementById("activeCityTag") ? document.getElementById("activeCityTag").textContent : "Urban Center";
+  const resCard = document.getElementById("grapResultCard");
+  resCard.style.display = "block";
+  resCard.innerHTML = `<div style="text-align:center; padding:12px; font-weight:700; color:var(--accent-purple);">⏳ Fetching CPCB GRAP Protocol...</div>`;
+
+  try {
+    const res = await fetch(`${API_BASE}/egov/grap-policy?aqi=${aqi}&city=${encodeURIComponent(city)}`);
+    const d = await res.json();
+    
+    const actionsList = (d.municipal_actions || []).map(x => `<li style="margin-bottom:4px;">${x}</li>`).join('');
+    const trafficList = (d.traffic_restrictions || []).map(x => `<li style="margin-bottom:4px;">${x}</li>`).join('');
+
+    resCard.innerHTML = `
+      <div style="background:white; padding:14px; border-radius:14px; border-left:5px solid ${d.stage_color}; border-top:1px solid rgba(226,232,240,0.8); border-right:1px solid rgba(226,232,240,0.8); border-bottom:1px solid rgba(226,232,240,0.8);">
+        <div style="font-size:12px; font-weight:800; color:white; background:${d.stage_color}; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px;">
+          ${d.grap_stage}
+        </div>
+        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">
+          🏢 Municipal Actions Required for ${d.city}:
+        </div>
+        <ul style="font-size:11.5px; line-height:1.5; color:var(--text-secondary); padding-left:18px; margin-bottom:10px;">
+          ${actionsList}
+        </ul>
+        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
+          🚦 Traffic Policy:
+        </div>
+        <ul style="font-size:11.5px; line-height:1.5; color:var(--text-secondary); padding-left:18px; margin-bottom:10px;">
+          ${trafficList}
+        </ul>
+        <div style="font-size:11px; font-weight:700; color:#c2410c; background:rgba(249,115,22,0.08); padding:8px; border-radius:8px;">
+          🏗️ Construction Enclosure: ${d.construction_policy}
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    resCard.innerHTML = `<div style="color:#ef4444; font-weight:700;">Could not load GRAP policy.</div>`;
+  }
+}
+
+async function runEiaSimulation() {
+  const pType = document.getElementById("eiaProjectType").value;
+  const aqi = parseFloat(document.getElementById("aqiInput").value) || 208;
+  const resCard = document.getElementById("eiaResultCard");
+  resCard.style.display = "block";
+  resCard.innerHTML = `<div style="text-align:center; padding:12px; font-weight:700; color:#d97706;">⚙️ Simulating Gaussian Plume Dust Dispersion...</div>`;
+
+  try {
+    const res = await fetch(`${API_BASE}/civil/eia-simulation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectType: pType, baselineAqi: aqi }),
+    });
+    const d = await res.json();
+    const plan = (d.mitigationPlan || []).map(x => `<li style="margin-bottom:4px;">${x}</li>`).join('');
+
+    resCard.innerHTML = `
+      <div style="background:white; padding:14px; border-radius:14px; border:1px solid rgba(226,232,240,0.8);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:14px; font-weight:800; color:#d97706;">Predicted AQI: ${d.predictedAqi}</span>
+          <span style="font-size:11px; font-weight:800; color:#ef4444; background:rgba(239,68,68,0.1); padding:2px 8px; border-radius:8px;">${d.aqiDelta}</span>
+        </div>
+        <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
+          Est. Dust Emissions: <b>${d.estimatedDustEmissionTonsYr} Tons/Year</b>
+        </div>
+        <div style="font-size:11px; font-weight:800; color:#059669; margin-bottom:6px;">
+          🌿 MANDATORY CIVIL MITIGATION PLAN:
+        </div>
+        <ul style="font-size:11px; line-height:1.4; color:var(--text-secondary); padding-left:18px;">
+          ${plan}
+        </ul>
+      </div>
+    `;
+  } catch (e) {
+    resCard.innerHTML = `<div style="color:#ef4444; font-weight:700;">Simulation error.</div>`;
+  }
+}
+
+window.onload = () => {
+  initMap();
+  loadCitiesDirectory();
+  loadMetrosTicker();
+  loadSpatialGrid();
+  initChart();
+  loadWeather(21.1458, 79.0882, 'Nagpur');
+};
+</script>
+</body>
+</html>

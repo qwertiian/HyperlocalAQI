@@ -1,0 +1,34 @@
+# Environment files & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Dependencies & Virtual Envs
+node_modules/
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache & artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+
+# Database, datasets & temporary logs
+*.db
+*.sqlite3
+data/aqi.db
+data/raw/*.csv
+logs/
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

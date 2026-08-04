@@ -1,0 +1,2866 @@
+[
+  {
+    "city": "Agra",
+    "name": "Manoharpur, Agra",
+    "agency": "UPPCB",
+    "lat": 27.2371,
+    "lon": 78.0194,
+    "code": "#5464"
+  },
+  {
+    "city": "Agra",
+    "name": "Rohta, Agra",
+    "agency": "UPPCB",
+    "lat": 27.107,
+    "lon": 78.0001,
+    "code": "#5482"
+  },
+  {
+    "city": "Agra",
+    "name": "Sanjay Palace, Agra",
+    "agency": "UPPCB",
+    "lat": 27.1987,
+    "lon": 78.006,
+    "code": "#307"
+  },
+  {
+    "city": "Agra",
+    "name": "Sector-3B Avas Vikas Colony, Agra",
+    "agency": "UPPCB",
+    "lat": 27.1941,
+    "lon": 77.9624,
+    "code": "#5465"
+  },
+  {
+    "city": "Agra",
+    "name": "Shahjahan Garden, Agra",
+    "agency": "UPPCB",
+    "lat": 27.1693,
+    "lon": 78.0358,
+    "code": "#5501"
+  },
+  {
+    "city": "Agra",
+    "name": "Shastripuram, Agra",
+    "agency": "UPPCB",
+    "lat": 27.1986,
+    "lon": 77.9207,
+    "code": "#5463"
+  },
+  {
+    "city": "Baghpat",
+    "name": "New Collectorate, Baghpat",
+    "agency": "UPPCB",
+    "lat": 28.9748,
+    "lon": 77.2134,
+    "code": "#1569"
+  },
+  {
+    "city": "Baghpat",
+    "name": "Sardar Patel Inter College, Baghpat",
+    "agency": "UPPCB",
+    "lat": 28.9649,
+    "lon": 77.2788,
+    "code": "#5585"
+  },
+  {
+    "city": "Bareilly",
+    "name": "Rajendra Nagar, Bareilly",
+    "agency": "UPPCB",
+    "lat": 28.3891,
+    "lon": 79.4296,
+    "code": "#5601"
+  },
+  {
+    "city": "Bulandshahr",
+    "name": "Yamunapuram, Bulandshahr",
+    "agency": "UPPCB",
+    "lat": 28.407,
+    "lon": 77.8498,
+    "code": "#1542"
+  },
+  {
+    "city": "Firozabad",
+    "name": "Nagla Bhau, Firozabad",
+    "agency": "UPPCB",
+    "lat": 27.1689,
+    "lon": 78.377,
+    "code": "#5480"
+  },
+  {
+    "city": "Firozabad",
+    "name": "Vibhab Nagar, Firozabad",
+    "agency": "UPPCB",
+    "lat": 27.1594,
+    "lon": 78.3953,
+    "code": "#5584"
+  },
+  {
+    "city": "Ghaziabad",
+    "name": "Indirapuram, Ghaziabad",
+    "agency": "UPPCB",
+    "lat": 28.6462,
+    "lon": 77.3581,
+    "code": "#5082"
+  },
+  {
+    "city": "Ghaziabad",
+    "name": "Loni, Ghaziabad",
+    "agency": "UPPCB",
+    "lat": 28.7573,
+    "lon": 77.2788,
+    "code": "#5083"
+  },
+  {
+    "city": "Ghaziabad",
+    "name": "Sanjay Nagar, Ghaziabad",
+    "agency": "UPPCB",
+    "lat": 28.6854,
+    "lon": 77.4538,
+    "code": "#5081"
+  },
+  {
+    "city": "Ghaziabad",
+    "name": "Vasundhara, Ghaziabad",
+    "agency": "UPPCB",
+    "lat": 28.6603,
+    "lon": 77.3573,
+    "code": "#144"
+  },
+  {
+    "city": "Gorakhpur",
+    "name": "Madan Mohan Malaviya University of Technology,\nGorakhpur",
+    "agency": "UPPCB",
+    "lat": 26.7301,
+    "lon": 83.4339,
+    "code": "#5472"
+  },
+  {
+    "city": "Greater Noida",
+    "name": "Knowledge Park - III, Greater Noida",
+    "agency": "UPPCB",
+    "lat": 28.4727,
+    "lon": 77.482,
+    "code": "#1541"
+  },
+  {
+    "city": "Greater Noida",
+    "name": "Knowledge Park - V, Greater Noida",
+    "agency": "UPPCB",
+    "lat": 28.5571,
+    "lon": 77.4537,
+    "code": "#5121"
+  },
+  {
+    "city": "Hapur",
+    "name": "Anand Vihar, Hapur",
+    "agency": "UPPCB",
+    "lat": 28.7256,
+    "lon": 77.7497,
+    "code": "#5023"
+  },
+  {
+    "city": "Jhansi",
+    "name": "Shivaji Nagar, Jhansi",
+    "agency": "UPPCB",
+    "lat": 25.4547,
+    "lon": 78.6039,
+    "code": "#5583"
+  },
+  {
+    "city": "Kanpur",
+    "name": "FTI Kidwai Nagar, Kanpur",
+    "agency": "UPPCB",
+    "lat": 26.4283,
+    "lon": 80.3271,
+    "code": "#5500"
+  },
+  {
+    "city": "Kanpur",
+    "name": "IITK, Kanpur",
+    "agency": "IITK",
+    "lat": 26.5117,
+    "lon": 80.2351,
+    "code": "#5416"
+  },
+  {
+    "city": "Kanpur",
+    "name": "NSI Kalyanpur, Kanpur",
+    "agency": "UPPCB",
+    "lat": 26.51,
+    "lon": 80.2496,
+    "code": "#5474"
+  },
+  {
+    "city": "Kanpur",
+    "name": "Nehru Nagar, Kanpur",
+    "agency": "UPPCB",
+    "lat": 26.4703,
+    "lon": 80.323,
+    "code": "#276"
+  },
+  {
+    "city": "Khurja",
+    "name": "Kalindi Kunj, Khurja",
+    "agency": "UPPCB",
+    "lat": 28.2349,
+    "lon": 77.8683,
+    "code": "#5603"
+  },
+  {
+    "city": "Lucknow",
+    "name": "B R Ambedkar University, Lucknow",
+    "agency": "UPPCB",
+    "lat": 26.7664,
+    "lon": 80.9273,
+    "code": "#5460"
+  },
+  {
+    "city": "Lucknow",
+    "name": "Central School, Lucknow",
+    "agency": "CPCB",
+    "lat": 26.8821,
+    "lon": 80.9303,
+    "code": "#272"
+  },
+  {
+    "city": "Lucknow",
+    "name": "Gomti Nagar, Lucknow",
+    "agency": "UPPCB",
+    "lat": 26.8681,
+    "lon": 81.0051,
+    "code": "#5128"
+  },
+  {
+    "city": "Lucknow",
+    "name": "Kukrail Picnic Spot-1, Lucknow",
+    "agency": "UPPCB",
+    "lat": 26.9072,
+    "lon": 80.9858,
+    "code": "#5462"
+  },
+  {
+    "city": "Lucknow",
+    "name": "Lalbagh, Lucknow",
+    "agency": "CPCB",
+    "lat": 26.8459,
+    "lon": 80.9366,
+    "code": "#277"
+  },
+  {
+    "city": "Lucknow",
+    "name": "Talkatora District Industries Center, Lucknow",
+    "agency": "CPCB",
+    "lat": 26.834,
+    "lon": 80.8917,
+    "code": "#297"
+  },
+  {
+    "city": "Meerut",
+    "name": "Ganga Nagar, Meerut",
+    "agency": "UPPCB",
+    "lat": 28.9993,
+    "lon": 77.759,
+    "code": "#5258"
+  },
+  {
+    "city": "Meerut",
+    "name": "Jai Bhim Nagar, Meerut",
+    "agency": "UPPCB",
+    "lat": 28.9536,
+    "lon": 77.7623,
+    "code": "#5109"
+  },
+  {
+    "city": "Meerut",
+    "name": "Pallavpuram Phase 2, Meerut",
+    "agency": "UPPCB",
+    "lat": 29.0635,
+    "lon": 77.7097,
+    "code": "#5257"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Buddhi Vihar, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8353,
+    "lon": 78.7446,
+    "code": "#5554"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Eco Herbal Park, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8407,
+    "lon": 78.6975,
+    "code": "#5556"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Employment Office, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8853,
+    "lon": 78.7388,
+    "code": "#5537"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Jigar Colony, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8567,
+    "lon": 78.7726,
+    "code": "#5555"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Kashiram Nagar, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8494,
+    "lon": 78.7424,
+    "code": "#5620"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Lajpat Nagar, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8253,
+    "lon": 78.7213,
+    "code": "#1398"
+  },
+  {
+    "city": "Moradabad",
+    "name": "Transport Nagar, Moradabad",
+    "agency": "UPPCB",
+    "lat": 28.8026,
+    "lon": 78.7537,
+    "code": "#5613"
+  },
+  {
+    "city": "Muzaffarnagar",
+    "name": "New Mandi, Muzaffarnagar",
+    "agency": "UPPCB",
+    "lat": 29.4724,
+    "lon": 77.7194,
+    "code": "#1550"
+  },
+  {
+    "city": "Noida",
+    "name": "Sector - 125, Noida",
+    "agency": "UPPCB",
+    "lat": 28.5448,
+    "lon": 77.3231,
+    "code": "#153"
+  },
+  {
+    "city": "Noida",
+    "name": "Sector - 62, Noida",
+    "agency": "IMD",
+    "lat": 28.6245,
+    "lon": 77.3577,
+    "code": "#111"
+  },
+  {
+    "city": "Noida",
+    "name": "Sector-1, Noida",
+    "agency": "UPPCB",
+    "lat": 28.5898,
+    "lon": 77.3101,
+    "code": "#5123"
+  },
+  {
+    "city": "Noida",
+    "name": "Sector-116, Noida",
+    "agency": "UPPCB",
+    "lat": 28.5692,
+    "lon": 77.3938,
+    "code": "#5122"
+  },
+  {
+    "city": "Prayagraj",
+    "name": "Jhunsi, Prayagraj",
+    "agency": "UPPCB",
+    "lat": 25.4256,
+    "lon": 81.9172,
+    "code": "#5461"
+  },
+  {
+    "city": "Prayagraj",
+    "name": "Motilal Nehru NIT, Prayagraj",
+    "agency": "UPPCB",
+    "lat": 25.494,
+    "lon": 81.863,
+    "code": "#5459"
+  },
+  {
+    "city": "Prayagraj",
+    "name": "Nagar Nigam, Prayagraj",
+    "agency": "UPPCB",
+    "lat": 25.4492,
+    "lon": 81.8274,
+    "code": "#5484"
+  },
+  {
+    "city": "Varanasi",
+    "name": "Ardhali Bazar, Varanasi",
+    "agency": "UPPCB",
+    "lat": 25.3506,
+    "lon": 82.9083,
+    "code": "#273"
+  },
+  {
+    "city": "Varanasi",
+    "name": "Bhelupur, Varanasi",
+    "agency": "UPPCB",
+    "lat": 25.3018,
+    "lon": 82.9968,
+    "code": "#5469"
+  },
+  {
+    "city": "Varanasi",
+    "name": "IESD Banaras Hindu University, Varanasi",
+    "agency": "UPPCB",
+    "lat": 25.2623,
+    "lon": 82.9954,
+    "code": "#5468"
+  },
+  {
+    "city": "Varanasi",
+    "name": "Maldahiya, Varanasi",
+    "agency": "UPPCB",
+    "lat": 25.3239,
+    "lon": 82.9969,
+    "code": "#5475"
+  },
+  {
+    "city": "Vrindavan",
+    "name": "Omex Eternity, Vrindavan",
+    "agency": "UPPCB",
+    "lat": 27.5714,
+    "lon": 77.6558,
+    "code": "#5483"
+  },
+  {
+    "city": "Aurangabad",
+    "name": "More Chowk Waluj, Aurangabad",
+    "agency": "MPCB",
+    "lat": 19.8389,
+    "lon": 75.2444,
+    "code": "#198"
+  },
+  {
+    "city": "Chandrapur",
+    "name": "Chandrapur, Chandrapur",
+    "agency": "MPCB",
+    "lat": 19.6453,
+    "lon": 77.6345,
+    "code": "#271"
+  },
+  {
+    "city": "Chandrapur",
+    "name": "MIDC Khutala, Chandrapur",
+    "agency": "MPCB",
+    "lat": 19.9775,
+    "lon": 79.2337,
+    "code": "#295"
+  },
+  {
+    "city": "Kalyan",
+    "name": "Khadakpada, Kalyan",
+    "agency": "MPCB",
+    "lat": 19.2529,
+    "lon": 73.142,
+    "code": "#5118"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Bandra Kurla Complex, Mumbai",
+    "agency": "IITM",
+    "lat": 19.0535,
+    "lon": 72.8464,
+    "code": "#5392"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Bandra, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.0627,
+    "lon": 72.8461,
+    "code": "#168"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Borivali East, Mumbai",
+    "agency": "IITM",
+    "lat": 19.2324,
+    "lon": 72.8689,
+    "code": "#5400"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Borivali East, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.2243,
+    "lon": 72.8658,
+    "code": "#5113"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Chakala-Andheri East, Mumbai",
+    "agency": "IITM",
+    "lat": 19.1107,
+    "lon": 72.8608,
+    "code": "#5399"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Chhatrapati Shivaji Intl. Airport (T2), Mumbai",
+    "agency": "MPCB",
+    "lat": 19.1008,
+    "lon": 72.8746,
+    "code": "#5107"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Colaba, Mumbai",
+    "agency": "MPCB",
+    "lat": 18.91,
+    "lon": 72.82,
+    "code": "#5120"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Deonar, Mumbai",
+    "agency": "IITM",
+    "lat": 19.0495,
+    "lon": 72.923,
+    "code": "#5396"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Kandivali East, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.2058,
+    "lon": 72.8682,
+    "code": "#5412"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Khindipada-Bhandup West, Mumbai",
+    "agency": "IITM",
+    "lat": 19.1653,
+    "lon": 72.9221,
+    "code": "#5397"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Kurla, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.0863,
+    "lon": 72.8888,
+    "code": "#5104"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Malad West, Mumbai",
+    "agency": "IITM",
+    "lat": 19.1971,
+    "lon": 72.822,
+    "code": "#5402"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Mazgaon, Mumbai",
+    "agency": "IITM",
+    "lat": 18.967,
+    "lon": 72.8421,
+    "code": "#5394"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Mulund West, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.175,
+    "lon": 72.9419,
+    "code": "#5413"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Navy Nagar-Colaba, Mumbai",
+    "agency": "IITM",
+    "lat": 18.8978,
+    "lon": 72.8133,
+    "code": "#5398"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Powai, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.1375,
+    "lon": 72.9151,
+    "code": "#5112"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Siddharth Nagar-Worli, Mumbai",
+    "agency": "IITM",
+    "lat": 19.0001,
+    "lon": 72.814,
+    "code": "#5403"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Sion, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.047,
+    "lon": 72.8746,
+    "code": "#5119"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Vasai West, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.3832,
+    "lon": 72.8204,
+    "code": "#5102"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Vile Parle West, Mumbai",
+    "agency": "MPCB",
+    "lat": 19.1086,
+    "lon": 72.8362,
+    "code": "#5106"
+  },
+  {
+    "city": "Mumbai",
+    "name": "Worli, Mumbai",
+    "agency": "MPCB",
+    "lat": 18.9936,
+    "lon": 72.8128,
+    "code": "#5115"
+  },
+  {
+    "city": "Nagpur",
+    "name": "Opp GPO Civil Lines, Nagpur",
+    "agency": "MPCB",
+    "lat": 21.1529,
+    "lon": 79.0518,
+    "code": "#303"
+  },
+  {
+    "city": "Nashik",
+    "name": "Gangapur Road, Nashik",
+    "agency": "MPCB",
+    "lat": 20.0073,
+    "lon": 73.7762,
+    "code": "#304"
+  },
+  {
+    "city": "Navi Mumbai",
+    "name": "Airoli, Navi Mumbai",
+    "agency": "MPCB",
+    "lat": 19.1494,
+    "lon": 72.9986,
+    "code": "#261"
+  },
+  {
+    "city": "Navi Mumbai",
+    "name": "Mahape, Navi Mumbai",
+    "agency": "MPCB",
+    "lat": 19.1135,
+    "lon": 73.009,
+    "code": "#5114"
+  },
+  {
+    "city": "Navi Mumbai",
+    "name": "Nerul, Navi Mumbai",
+    "agency": "MPCB",
+    "lat": 19.0088,
+    "lon": 73.0166,
+    "code": "#5103"
+  },
+  {
+    "city": "Navi Mumbai",
+    "name": "Sector-19A Nerul, Navi Mumbai",
+    "agency": "IITM",
+    "lat": 19.044,
+    "lon": 73.0325,
+    "code": "#5401"
+  },
+  {
+    "city": "Pune",
+    "name": "Alandi, Pune",
+    "agency": "IITM",
+    "lat": 18.6751,
+    "lon": 73.8927,
+    "code": "#5405"
+  },
+  {
+    "city": "Pune",
+    "name": "Bhosari, Pune",
+    "agency": "IITM",
+    "lat": 18.6401,
+    "lon": 73.849,
+    "code": "#5406"
+  },
+  {
+    "city": "Pune",
+    "name": "Hadapsar, Pune",
+    "agency": "IITM",
+    "lat": 18.5018,
+    "lon": 73.9275,
+    "code": "#5407"
+  },
+  {
+    "city": "Pune",
+    "name": "Karve Road, Pune",
+    "agency": "MPCB",
+    "lat": 18.5012,
+    "lon": 73.8166,
+    "code": "#292"
+  },
+  {
+    "city": "Pune",
+    "name": "MIT-Kothrud, Pune",
+    "agency": "IITM",
+    "lat": 18.5178,
+    "lon": 73.8215,
+    "code": "#5410"
+  },
+  {
+    "city": "Pune",
+    "name": "Mhada Colony, Pune",
+    "agency": "IITM",
+    "lat": 18.573,
+    "lon": 73.9277,
+    "code": "#5404"
+  },
+  {
+    "city": "Pune",
+    "name": "Revenue Colony-Shivajinagar, Pune",
+    "agency": "IITM",
+    "lat": 18.5301,
+    "lon": 73.8496,
+    "code": "#5409"
+  },
+  {
+    "city": "Pune",
+    "name": "Transport Nagar-Nigdi, Pune",
+    "agency": "IITM",
+    "lat": 18.6643,
+    "lon": 73.764,
+    "code": "#5408"
+  },
+  {
+    "city": "Solapur",
+    "name": "Solapur, Solapur",
+    "agency": "MPCB",
+    "lat": 17.6599,
+    "lon": 75.9064,
+    "code": "#302"
+  },
+  {
+    "city": "Thane",
+    "name": "Pimpleshwar Mandir, Thane",
+    "agency": "MPCB",
+    "lat": 19.1921,
+    "lon": 72.9585,
+    "code": "#305"
+  },
+  {
+    "city": "Delhi",
+    "name": "Alipur, Delhi",
+    "agency": "DPCC",
+    "lat": 28.8153,
+    "lon": 77.153,
+    "code": "#5024"
+  },
+  {
+    "city": "Delhi",
+    "name": "Anand Vihar, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6476,
+    "lon": 77.3158,
+    "code": "#301"
+  },
+  {
+    "city": "Delhi",
+    "name": "Ashok Vihar, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6954,
+    "lon": 77.1817,
+    "code": "#1420"
+  },
+  {
+    "city": "Delhi",
+    "name": "Aya Nagar, Delhi",
+    "agency": "IMD",
+    "lat": 28.4707,
+    "lon": 77.1099,
+    "code": "#108"
+  },
+  {
+    "city": "Delhi",
+    "name": "Bawana, Delhi",
+    "agency": "DPCC",
+    "lat": 28.7762,
+    "lon": 77.0511,
+    "code": "#1560"
+  },
+  {
+    "city": "Delhi",
+    "name": "Burari Crossing, Delhi",
+    "agency": "IMD",
+    "lat": 28.7257,
+    "lon": 77.2012,
+    "code": "#104"
+  },
+  {
+    "city": "Delhi",
+    "name": "CRRI Mathura Road, Delhi",
+    "agency": "IMD",
+    "lat": 28.5512,
+    "lon": 77.2736,
+    "code": "#103"
+  },
+  {
+    "city": "Delhi",
+    "name": "Chandni Chowk, Delhi",
+    "agency": "IITM",
+    "lat": 28.6568,
+    "lon": 77.2272,
+    "code": "#5393"
+  },
+  {
+    "city": "Delhi",
+    "name": "DTU, Delhi",
+    "agency": "CPCB",
+    "lat": 28.75,
+    "lon": 77.1113,
+    "code": "#118"
+  },
+  {
+    "city": "Delhi",
+    "name": "Dr. Karni Singh Shooting Range, Delhi",
+    "agency": "DPCC",
+    "lat": 28.4986,
+    "lon": 77.2648,
+    "code": "#1421"
+  },
+  {
+    "city": "Delhi",
+    "name": "Dwarka-Sector 8, Delhi",
+    "agency": "DPCC",
+    "lat": 28.571,
+    "lon": 77.0719,
+    "code": "#1422"
+  },
+  {
+    "city": "Delhi",
+    "name": "IGI Airport (T3), Delhi",
+    "agency": "IMD",
+    "lat": 28.5628,
+    "lon": 77.118,
+    "code": "#106"
+  },
+  {
+    "city": "Delhi",
+    "name": "IHBAS, Dilshad Garden, Delhi",
+    "agency": "CPCB",
+    "lat": 28.6812,
+    "lon": 77.3025,
+    "code": "#114"
+  },
+  {
+    "city": "Delhi",
+    "name": "ITO, Delhi",
+    "agency": "CPCB",
+    "lat": 28.6286,
+    "lon": 77.2411,
+    "code": "#117"
+  },
+  {
+    "city": "Delhi",
+    "name": "Jahangirpuri, Delhi",
+    "agency": "DPCC",
+    "lat": 28.7328,
+    "lon": 77.1706,
+    "code": "#1423"
+  },
+  {
+    "city": "Delhi",
+    "name": "Jawaharlal Nehru Stadium, Delhi",
+    "agency": "DPCC",
+    "lat": 28.5803,
+    "lon": 77.2338,
+    "code": "#1424"
+  },
+  {
+    "city": "Delhi",
+    "name": "Lodhi Road, Delhi",
+    "agency": "IITM",
+    "lat": 28.5883,
+    "lon": 77.2217,
+    "code": "#5395"
+  },
+  {
+    "city": "Delhi",
+    "name": "Lodhi Road, Delhi",
+    "agency": "IMD",
+    "lat": 28.5918,
+    "lon": 77.2273,
+    "code": "#109"
+  },
+  {
+    "city": "Delhi",
+    "name": "Major Dhyan Chand National Stadium, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6113,
+    "lon": 77.2377,
+    "code": "#1425"
+  },
+  {
+    "city": "Delhi",
+    "name": "Mandir Marg, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6364,
+    "lon": 77.2011,
+    "code": "#122"
+  },
+  {
+    "city": "Delhi",
+    "name": "Mundka, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6847,
+    "lon": 77.0766,
+    "code": "#1561"
+  },
+  {
+    "city": "Delhi",
+    "name": "NSIT Dwarka, Delhi",
+    "agency": "CPCB",
+    "lat": 28.6091,
+    "lon": 77.0325,
+    "code": "#115"
+  },
+  {
+    "city": "Delhi",
+    "name": "Najafgarh, Delhi",
+    "agency": "DPCC",
+    "lat": 28.5702,
+    "lon": 76.9338,
+    "code": "#1427"
+  },
+  {
+    "city": "Delhi",
+    "name": "Narela, Delhi",
+    "agency": "DPCC",
+    "lat": 28.8228,
+    "lon": 77.102,
+    "code": "#1426"
+  },
+  {
+    "city": "Delhi",
+    "name": "Nehru Nagar, Delhi",
+    "agency": "DPCC",
+    "lat": 28.5679,
+    "lon": 77.2505,
+    "code": "#1429"
+  },
+  {
+    "city": "Delhi",
+    "name": "North Campus, DU, Delhi",
+    "agency": "IMD",
+    "lat": 28.6574,
+    "lon": 77.1585,
+    "code": "#105"
+  },
+  {
+    "city": "Delhi",
+    "name": "Okhla Phase-2, Delhi",
+    "agency": "DPCC",
+    "lat": 28.5308,
+    "lon": 77.2713,
+    "code": "#1428"
+  },
+  {
+    "city": "Delhi",
+    "name": "Patparganj, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6238,
+    "lon": 77.2872,
+    "code": "#1431"
+  },
+  {
+    "city": "Delhi",
+    "name": "Punjabi Bagh, Delhi",
+    "agency": "DPCC",
+    "lat": 28.674,
+    "lon": 77.131,
+    "code": "#125"
+  },
+  {
+    "city": "Delhi",
+    "name": "Pusa, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6396,
+    "lon": 77.1463,
+    "code": "#1563"
+  },
+  {
+    "city": "Delhi",
+    "name": "Pusa, Delhi",
+    "agency": "IMD",
+    "lat": 28.6396,
+    "lon": 77.1463,
+    "code": "#107"
+  },
+  {
+    "city": "Delhi",
+    "name": "R K Puram, Delhi",
+    "agency": "DPCC",
+    "lat": 28.5633,
+    "lon": 77.1869,
+    "code": "#124"
+  },
+  {
+    "city": "Delhi",
+    "name": "Rohini, Delhi",
+    "agency": "DPCC",
+    "lat": 28.7325,
+    "lon": 77.1199,
+    "code": "#1430"
+  },
+  {
+    "city": "Delhi",
+    "name": "Shadipur, Delhi",
+    "agency": "CPCB",
+    "lat": 28.6515,
+    "lon": 77.1473,
+    "code": "#113"
+  },
+  {
+    "city": "Delhi",
+    "name": "Sirifort, Delhi",
+    "agency": "CPCB",
+    "lat": 28.5504,
+    "lon": 77.2159,
+    "code": "#119"
+  },
+  {
+    "city": "Delhi",
+    "name": "Sonia Vihar, Delhi",
+    "agency": "DPCC",
+    "lat": 28.7105,
+    "lon": 77.2495,
+    "code": "#1432"
+  },
+  {
+    "city": "Delhi",
+    "name": "Sri Aurobindo Marg, Delhi",
+    "agency": "DPCC",
+    "lat": 28.5313,
+    "lon": 77.1902,
+    "code": "#1562"
+  },
+  {
+    "city": "Delhi",
+    "name": "Vivek Vihar, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6723,
+    "lon": 77.3153,
+    "code": "#1435"
+  },
+  {
+    "city": "Delhi",
+    "name": "Wazirpur, Delhi",
+    "agency": "DPCC",
+    "lat": 28.6998,
+    "lon": 77.1655,
+    "code": "#1434"
+  },
+  {
+    "city": "Araria",
+    "name": "Kharahiya Basti, Araria",
+    "agency": "BSPCB",
+    "lat": 26.1465,
+    "lon": 87.4542,
+    "code": "#5539"
+  },
+  {
+    "city": "Arrah",
+    "name": "New DM Office, Arrah",
+    "agency": "BSPCB",
+    "lat": 25.5626,
+    "lon": 84.6633,
+    "code": "#5538"
+  },
+  {
+    "city": "AurangabadB",
+    "name": "Gurdeo Nagar, Aurangabad",
+    "agency": "BSPCB",
+    "lat": 24.7575,
+    "lon": 84.3662,
+    "code": "#5544"
+  },
+  {
+    "city": "Begusarai",
+    "name": "DRCC Anandpur, Begusarai",
+    "agency": "BSPCB",
+    "lat": 25.4443,
+    "lon": 86.1402,
+    "code": "#5540"
+  },
+  {
+    "city": "Bettiah",
+    "name": "Kamalnath Nagar, Bettiah",
+    "agency": "BSPCB",
+    "lat": 26.8037,
+    "lon": 84.5195,
+    "code": "#5476"
+  },
+  {
+    "city": "Bhagalpur",
+    "name": "DM Office_Kachari Chowk, Bhagalpur",
+    "agency": "BSPCB",
+    "lat": 25.251,
+    "lon": 86.989,
+    "code": "#5543"
+  },
+  {
+    "city": "Bhagalpur",
+    "name": "Mayaganj, Bhagalpur",
+    "agency": "BSPCB",
+    "lat": 25.2652,
+    "lon": 87.0129,
+    "code": "#5541"
+  },
+  {
+    "city": "Bihar Sharif",
+    "name": "D M Colony, Bihar Sharif",
+    "agency": "BSPCB",
+    "lat": 25.2048,
+    "lon": 85.515,
+    "code": "#5481"
+  },
+  {
+    "city": "Buxar",
+    "name": "Central Jail, Buxar",
+    "agency": "BSPCB",
+    "lat": 25.5556,
+    "lon": 83.9509,
+    "code": "#5542"
+  },
+  {
+    "city": "Chhapra",
+    "name": "Darshan Nagar, Chhapra",
+    "agency": "BSPCB",
+    "lat": 25.7808,
+    "lon": 84.7447,
+    "code": "#5545"
+  },
+  {
+    "city": "Darbhanga",
+    "name": "Town Hall - Lal Bagh, Darbhanga",
+    "agency": "BSPCB",
+    "lat": 26.1515,
+    "lon": 85.8934,
+    "code": "#5477"
+  },
+  {
+    "city": "Gaya",
+    "name": "Collectorate, Gaya",
+    "agency": "BSPCB",
+    "lat": 24.7955,
+    "lon": 84.9994,
+    "code": "#159"
+  },
+  {
+    "city": "Gaya",
+    "name": "Kareemganj, Gaya",
+    "agency": "BSPCB",
+    "lat": 24.7924,
+    "lon": 84.9924,
+    "code": "#5548"
+  },
+  {
+    "city": "Gaya",
+    "name": "SFTI Kusdihra, Gaya",
+    "agency": "BSPCB",
+    "lat": 24.7625,
+    "lon": 84.9823,
+    "code": "#5338"
+  },
+  {
+    "city": "Hajipur",
+    "name": "Industrial Area, Hajipur",
+    "agency": "BSPCB",
+    "lat": 25.6972,
+    "lon": 85.2459,
+    "code": "#5337"
+  },
+  {
+    "city": "Katihar",
+    "name": "Mirchaibari, Katihar",
+    "agency": "BSPCB",
+    "lat": 25.5601,
+    "lon": 87.5533,
+    "code": "#5546"
+  },
+  {
+    "city": "Kishanganj",
+    "name": "SDM Office_Khagra, Kishanganj",
+    "agency": "BSPCB",
+    "lat": 26.0881,
+    "lon": 87.9384,
+    "code": "#5547"
+  },
+  {
+    "city": "Manguraha",
+    "name": "Forest Rest House, Manguraha",
+    "agency": "BSPCB",
+    "lat": 25.3573,
+    "lon": 84.1078,
+    "code": "#5550"
+  },
+  {
+    "city": "Motihari",
+    "name": "Gandak Colony, Motihari",
+    "agency": "BSPCB",
+    "lat": 26.6309,
+    "lon": 84.9005,
+    "code": "#5478"
+  },
+  {
+    "city": "Munger",
+    "name": "Town Hall, Munger",
+    "agency": "BSPCB",
+    "lat": 25.3768,
+    "lon": 86.4715,
+    "code": "#5490"
+  },
+  {
+    "city": "Muzaffarpur",
+    "name": "Buddha Colony, Muzaffarpur",
+    "agency": "BSPCB",
+    "lat": 26.1144,
+    "lon": 85.3981,
+    "code": "#5370"
+  },
+  {
+    "city": "Muzaffarpur",
+    "name": "MIT-Daudpur Kothi, Muzaffarpur",
+    "agency": "BSPCB",
+    "lat": 26.1403,
+    "lon": 85.365,
+    "code": "#5479"
+  },
+  {
+    "city": "Muzaffarpur",
+    "name": "Muzaffarpur Collectorate, Muzaffarpur",
+    "agency": "BSPCB",
+    "lat": 26.1209,
+    "lon": 85.3647,
+    "code": "#158"
+  },
+  {
+    "city": "Patna",
+    "name": "DRM Office Danapur, Patna",
+    "agency": "BSPCB",
+    "lat": 25.5866,
+    "lon": 85.0436,
+    "code": "#5336"
+  },
+  {
+    "city": "Patna",
+    "name": "Govt. High School Shikarpur, Patna",
+    "agency": "BSPCB",
+    "lat": 25.5925,
+    "lon": 85.2272,
+    "code": "#5335"
+  },
+  {
+    "city": "Patna",
+    "name": "IGSC Planetarium Complex, Patna",
+    "agency": "BSPCB",
+    "lat": 25.5941,
+    "lon": 85.1376,
+    "code": "#157"
+  },
+  {
+    "city": "Patna",
+    "name": "Muradpur, Patna",
+    "agency": "BSPCB",
+    "lat": 25.6197,
+    "lon": 85.1474,
+    "code": "#5261"
+  },
+  {
+    "city": "Patna",
+    "name": "Rajbansi Nagar, Patna",
+    "agency": "BSPCB",
+    "lat": 25.5995,
+    "lon": 85.1137,
+    "code": "#5262"
+  },
+  {
+    "city": "Patna",
+    "name": "Samanpura, Patna",
+    "agency": "BSPCB",
+    "lat": 25.5967,
+    "lon": 85.0856,
+    "code": "#5263"
+  },
+  {
+    "city": "Purnia",
+    "name": "Mariam Nagar, Purnia",
+    "agency": "BSPCB",
+    "lat": 25.3663,
+    "lon": 87.1175,
+    "code": "#5549"
+  },
+  {
+    "city": "Rajgir",
+    "name": "Dangi Tola, Rajgir",
+    "agency": "BSPCB",
+    "lat": 25.0328,
+    "lon": 85.4195,
+    "code": "#5489"
+  },
+  {
+    "city": "Saharsa",
+    "name": "Police Line, Saharsa",
+    "agency": "BSPCB",
+    "lat": 25.8924,
+    "lon": 86.5903,
+    "code": "#5551"
+  },
+  {
+    "city": "Samastipur",
+    "name": "DM Office_Kasipur, Samastipur",
+    "agency": "BSPCB",
+    "lat": 25.8597,
+    "lon": 85.7794,
+    "code": "#5552"
+  },
+  {
+    "city": "Sasaram",
+    "name": "Dada Peer, Sasaram",
+    "agency": "BSPCB",
+    "lat": 24.9528,
+    "lon": 84.0024,
+    "code": "#5485"
+  },
+  {
+    "city": "Siwan",
+    "name": "Chitragupta Nagar, Siwan",
+    "agency": "BSPCB",
+    "lat": 26.2272,
+    "lon": 84.357,
+    "code": "#5553"
+  },
+  {
+    "city": "Bagalkot",
+    "name": "Vidayagiri, Bagalkot",
+    "agency": "KSPCB",
+    "lat": 16.1728,
+    "lon": 75.6597,
+    "code": "#5264"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "BTM Layout, Bengaluru",
+    "agency": "CPCB",
+    "lat": 12.9135,
+    "lon": 77.5951,
+    "code": "#162"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "BWSSB Kadabesanahalli, Bengaluru",
+    "agency": "CPCB",
+    "lat": 12.9352,
+    "lon": 77.6814,
+    "code": "#164"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Bapuji Nagar, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 12.9519,
+    "lon": 77.5398,
+    "code": "#1553"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "City Railway Station, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 12.9757,
+    "lon": 77.5661,
+    "code": "#165"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Hebbal, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 13.0292,
+    "lon": 77.5859,
+    "code": "#1554"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Hombegowda Nagar, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 12.9385,
+    "lon": 77.5901,
+    "code": "#1555"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Jayanagar 5th Block, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 12.921,
+    "lon": 77.5849,
+    "code": "#1556"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Peenya, Bengaluru",
+    "agency": "CPCB",
+    "lat": 13.027,
+    "lon": 77.4941,
+    "code": "#163"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Sanegurava Halli, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 12.9903,
+    "lon": 77.5431,
+    "code": "#166"
+  },
+  {
+    "city": "Bengaluru",
+    "name": "Silk Board, Bengaluru",
+    "agency": "KSPCB",
+    "lat": 12.9173,
+    "lon": 77.6228,
+    "code": "#1558"
+  },
+  {
+    "city": "Bidar",
+    "name": "Naubad, Bidar",
+    "agency": "KSPCB",
+    "lat": 17.9303,
+    "lon": 77.4822,
+    "code": "#5418"
+  },
+  {
+    "city": "Chamarajanagar",
+    "name": "Urban, Chamarajanagar",
+    "agency": "KSPCB",
+    "lat": 11.5536,
+    "lon": 76.5552,
+    "code": "#5124"
+  },
+  {
+    "city": "Chikkaballapur",
+    "name": "Chikkaballapur Rural, Chikkaballapur",
+    "agency": "KSPCB",
+    "lat": 13.4288,
+    "lon": 77.7314,
+    "code": "#1557"
+  },
+  {
+    "city": "Chikkamagaluru",
+    "name": "Kalyana Nagara, Chikkamagaluru",
+    "agency": "KSPCB",
+    "lat": 13.328,
+    "lon": 75.7971,
+    "code": "#5265"
+  },
+  {
+    "city": "Davanagere",
+    "name": "Devaraj Urs Badavane, Davanagere",
+    "agency": "KSPCB",
+    "lat": 14.4758,
+    "lon": 75.9052,
+    "code": "#5422"
+  },
+  {
+    "city": "Gadag",
+    "name": "Panchal Nagar, Gadag",
+    "agency": "KSPCB",
+    "lat": 15.4115,
+    "lon": 75.6381,
+    "code": "#5419"
+  },
+  {
+    "city": "Hassan",
+    "name": "B.Katihalli, Hassan",
+    "agency": "KSPCB",
+    "lat": 13.0086,
+    "lon": 76.1253,
+    "code": "#5448"
+  },
+  {
+    "city": "Haveri",
+    "name": "Ashwini Nagar, Haveri",
+    "agency": "KSPCB",
+    "lat": 14.7918,
+    "lon": 75.3896,
+    "code": "#5420"
+  },
+  {
+    "city": "Hubballi",
+    "name": "Deshpande Nagar, Hubballi",
+    "agency": "KSPCB",
+    "lat": 15.3518,
+    "lon": 75.1407,
+    "code": "#1447"
+  },
+  {
+    "city": "Kalaburagi",
+    "name": "Lal Bahadur Shastri Nagar, Kalaburagi",
+    "agency": "KSPCB",
+    "lat": 17.322,
+    "lon": 76.8226,
+    "code": "#1565"
+  },
+  {
+    "city": "Kolar",
+    "name": "Tamaka Ind. Area, Kolar",
+    "agency": "KSPCB",
+    "lat": 13.1276,
+    "lon": 78.157,
+    "code": "#1551"
+  },
+  {
+    "city": "Koppal",
+    "name": "Diwator Nagar, Koppal",
+    "agency": "KSPCB",
+    "lat": 15.3476,
+    "lon": 76.1818,
+    "code": "#5415"
+  },
+  {
+    "city": "Madikeri",
+    "name": "Stuart Hill, Madikeri",
+    "agency": "KSPCB",
+    "lat": 12.4159,
+    "lon": 75.7351,
+    "code": "#5391"
+  },
+  {
+    "city": "Mangalore",
+    "name": "Kadri, Mangalore",
+    "agency": "KSPCB",
+    "lat": 12.8893,
+    "lon": 74.853,
+    "code": "#5421"
+  },
+  {
+    "city": "Mysuru",
+    "name": "Hebbal 1st Stage, Mysuru",
+    "agency": "KSPCB",
+    "lat": 12.2104,
+    "lon": 76.3738,
+    "code": "#5125"
+  },
+  {
+    "city": "Raichur",
+    "name": "Haji Colony, Raichur",
+    "agency": "KSPCB",
+    "lat": 16.2081,
+    "lon": 77.3484,
+    "code": "#5414"
+  },
+  {
+    "city": "Ramanagara",
+    "name": "Vijay Nagar, Ramanagara",
+    "agency": "KSPCB",
+    "lat": 12.7334,
+    "lon": 77.2981,
+    "code": "#5255"
+  },
+  {
+    "city": "Shivamogga",
+    "name": "Vinoba Nagara, Shivamogga",
+    "agency": "KSPCB",
+    "lat": 13.94,
+    "lon": 75.5559,
+    "code": "#5266"
+  },
+  {
+    "city": "Udupi",
+    "name": "Brahmagiri, Udupi",
+    "agency": "KSPCB",
+    "lat": 13.3419,
+    "lon": 74.7469,
+    "code": "#5433"
+  },
+  {
+    "city": "Vijayapura",
+    "name": "Ibrahimpur, Vijayapura",
+    "agency": "KSPCB",
+    "lat": 16.8026,
+    "lon": 75.7227,
+    "code": "#5267"
+  },
+  {
+    "city": "Yadgir",
+    "name": "Collector Office, Yadgir",
+    "agency": "KSPCB",
+    "lat": 16.7602,
+    "lon": 77.1428,
+    "code": "#5254"
+  },
+  {
+    "city": "Ambala",
+    "name": "Patti Mehar, Ambala",
+    "agency": "HSPCB",
+    "lat": 30.3796,
+    "lon": 76.7783,
+    "code": "#5052"
+  },
+  {
+    "city": "Bahadurgarh",
+    "name": "Arya Nagar, Bahadurgarh",
+    "agency": "HSPCB",
+    "lat": 28.6701,
+    "lon": 76.9254,
+    "code": "#5045"
+  },
+  {
+    "city": "Ballabgarh",
+    "name": "Nathu Colony, Ballabgarh",
+    "agency": "HSPCB",
+    "lat": 28.3419,
+    "lon": 77.3197,
+    "code": "#5060"
+  },
+  {
+    "city": "Bhiwani",
+    "name": "H.B. Colony, Bhiwani",
+    "agency": "HSPCB",
+    "lat": 28.8062,
+    "lon": 76.1411,
+    "code": "#5047"
+  },
+  {
+    "city": "Charkhi Dadri",
+    "name": "Mini Secretariat, Charkhi Dadri",
+    "agency": "HSPCB",
+    "lat": 28.5939,
+    "lon": 76.2707,
+    "code": "#5339"
+  },
+  {
+    "city": "Dharuhera",
+    "name": "Municipal Corporation Office, Dharuhera",
+    "agency": "HSPCB",
+    "lat": 28.2068,
+    "lon": 76.7997,
+    "code": "#5044"
+  },
+  {
+    "city": "Faridabad",
+    "name": "New Industrial Town, Faridabad",
+    "agency": "HSPCB",
+    "lat": 28.3907,
+    "lon": 77.3006,
+    "code": "#5340"
+  },
+  {
+    "city": "Faridabad",
+    "name": "Sector 11, Faridabad",
+    "agency": "HSPCB",
+    "lat": 28.3761,
+    "lon": 77.3157,
+    "code": "#5342"
+  },
+  {
+    "city": "Faridabad",
+    "name": "Sector 30, Faridabad",
+    "agency": "HSPCB",
+    "lat": 28.4417,
+    "lon": 77.3217,
+    "code": "#5341"
+  },
+  {
+    "city": "Faridabad",
+    "name": "Sector- 16A, Faridabad",
+    "agency": "HSPCB",
+    "lat": 28.4088,
+    "lon": 77.3099,
+    "code": "#263"
+  },
+  {
+    "city": "Fatehabad",
+    "name": "Huda Sector, Fatehabad",
+    "agency": "HSPCB",
+    "lat": 29.5037,
+    "lon": 75.4679,
+    "code": "#5054"
+  },
+  {
+    "city": "Gurugram",
+    "name": "NISE Gwal Pahari, Gurugram",
+    "agency": "IMD",
+    "lat": 28.4227,
+    "lon": 77.1489,
+    "code": "#5025"
+  },
+  {
+    "city": "Gurugram",
+    "name": "Sector-51, Gurugram",
+    "agency": "HSPCB",
+    "lat": 28.4227,
+    "lon": 77.0667,
+    "code": "#5345"
+  },
+  {
+    "city": "Gurugram",
+    "name": "Teri Gram, Gurugram",
+    "agency": "HSPCB",
+    "lat": 28.4275,
+    "lon": 77.1465,
+    "code": "#5344"
+  },
+  {
+    "city": "Gurugram",
+    "name": "Vikas Sadan, Gurugram",
+    "agency": "HSPCB",
+    "lat": 28.4501,
+    "lon": 77.0263,
+    "code": "#146"
+  },
+  {
+    "city": "Hisar",
+    "name": "Urban Estate-II, Hisar",
+    "agency": "HSPCB",
+    "lat": 29.1406,
+    "lon": 75.7449,
+    "code": "#5057"
+  },
+  {
+    "city": "Jind",
+    "name": "Police Lines, Jind",
+    "agency": "HSPCB",
+    "lat": 29.3078,
+    "lon": 76.3376,
+    "code": "#5056"
+  },
+  {
+    "city": "Kaithal",
+    "name": "Rishi Nagar, Kaithal",
+    "agency": "HSPCB",
+    "lat": 29.8006,
+    "lon": 76.4155,
+    "code": "#5072"
+  },
+  {
+    "city": "Karnal",
+    "name": "Sector-12, Karnal",
+    "agency": "HSPCB",
+    "lat": 29.6953,
+    "lon": 77.0027,
+    "code": "#5049"
+  },
+  {
+    "city": "Kurukshetra",
+    "name": "Sector-7, Kurukshetra",
+    "agency": "HSPCB",
+    "lat": 29.9669,
+    "lon": 76.8759,
+    "code": "#5043"
+  },
+  {
+    "city": "Mandikhera",
+    "name": "General Hospital, Mandikhera",
+    "agency": "HSPCB",
+    "lat": 27.9002,
+    "lon": 76.9938,
+    "code": "#5055"
+  },
+  {
+    "city": "Manesar",
+    "name": "Sector-2 IMT, Manesar",
+    "agency": "HSPCB",
+    "lat": 28.3607,
+    "lon": 76.9361,
+    "code": "#5039"
+  },
+  {
+    "city": "Narnaul",
+    "name": "Shastri Nagar, Narnaul",
+    "agency": "HSPCB",
+    "lat": 28.0602,
+    "lon": 76.1131,
+    "code": "#5053"
+  },
+  {
+    "city": "Palwal",
+    "name": "Shyam Nagar, Palwal",
+    "agency": "HSPCB",
+    "lat": 28.1486,
+    "lon": 77.3321,
+    "code": "#5050"
+  },
+  {
+    "city": "Panchkula",
+    "name": "Sector-6, Panchkula",
+    "agency": "HSPCB",
+    "lat": 30.7058,
+    "lon": 76.8532,
+    "code": "#161"
+  },
+  {
+    "city": "Panipat",
+    "name": "Sector-18, Panipat",
+    "agency": "HSPCB",
+    "lat": 29.498,
+    "lon": 76.9933,
+    "code": "#5048"
+  },
+  {
+    "city": "Rohtak",
+    "name": "MD University, Rohtak",
+    "agency": "HSPCB",
+    "lat": 28.5212,
+    "lon": 76.3714,
+    "code": "#147"
+  },
+  {
+    "city": "Sirsa",
+    "name": "F-Block, Sirsa",
+    "agency": "HSPCB",
+    "lat": 29.5364,
+    "lon": 75.0158,
+    "code": "#5051"
+  },
+  {
+    "city": "Sonipat",
+    "name": "Murthal, Sonipat",
+    "agency": "HSPCB",
+    "lat": 29.0272,
+    "lon": 77.0621,
+    "code": "#5041"
+  },
+  {
+    "city": "Yamuna Nagar",
+    "name": "Gobind Pura, Yamuna Nagar",
+    "agency": "HSPCB",
+    "lat": 30.1481,
+    "lon": 77.2893,
+    "code": "#5046"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "Chandkheda, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.108,
+    "lon": 72.5746,
+    "code": "#5453"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "Gyaspur, Ahmedabad",
+    "agency": "IITM",
+    "lat": 22.9771,
+    "lon": 72.553,
+    "code": "#5450"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "Maninagar, Ahmedabad",
+    "agency": "GPCB",
+    "lat": 23.0027,
+    "lon": 72.5919,
+    "code": "#308"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "Raikhad, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.0205,
+    "lon": 72.5793,
+    "code": "#5452"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "Rakhial, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.0168,
+    "lon": 72.6258,
+    "code": "#5451"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "SAC ISRO Bopal, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.0411,
+    "lon": 72.4567,
+    "code": "#5454"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "SAC ISRO Satellite, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.0234,
+    "lon": 72.5152,
+    "code": "#5455"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "SVPI Airport Hansol, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.0768,
+    "lon": 72.6279,
+    "code": "#5456"
+  },
+  {
+    "city": "Ahmedabad",
+    "name": "Sardar Vallabhbhai Patel Stadium, Ahmedabad",
+    "agency": "IITM",
+    "lat": 23.0431,
+    "lon": 72.563,
+    "code": "#5449"
+  },
+  {
+    "city": "Ankleshwar",
+    "name": "GIDC, Ankleshwar",
+    "agency": "GPCB",
+    "lat": 21.6133,
+    "lon": 73.0106,
+    "code": "#5065"
+  },
+  {
+    "city": "Gandhinagar",
+    "name": "GIFT City, Gandhinagar",
+    "agency": "IITM",
+    "lat": 23.1638,
+    "lon": 72.6778,
+    "code": "#5458"
+  },
+  {
+    "city": "Gandhinagar",
+    "name": "IIPHG Lekawada, Gandhinagar",
+    "agency": "IITM",
+    "lat": 23.2436,
+    "lon": 72.6899,
+    "code": "#5457"
+  },
+  {
+    "city": "Gandhinagar",
+    "name": "Sector-10, Gandhinagar",
+    "agency": "GPCB",
+    "lat": 23.2217,
+    "lon": 72.6543,
+    "code": "#5066"
+  },
+  {
+    "city": "Nandesari",
+    "name": "GIDC, Nandesari",
+    "agency": "Nandesari Ind. Association",
+    "lat": 22.4108,
+    "lon": 73.0979,
+    "code": "#5274"
+  },
+  {
+    "city": "Vapi",
+    "name": "Phase-1 GIDC, Vapi",
+    "agency": "GPCB",
+    "lat": 20.3624,
+    "lon": 72.918,
+    "code": "#5071"
+  },
+  {
+    "city": "Vatva",
+    "name": "Phase-4 GIDC, Vatva",
+    "agency": "GPCB",
+    "lat": 22.9696,
+    "lon": 72.6435,
+    "code": "#5067"
+  },
+  {
+    "city": "Bhopal",
+    "name": "T T Nagar, Bhopal",
+    "agency": "MPPCB",
+    "lat": 23.2336,
+    "lon": 77.4006,
+    "code": "#5247"
+  },
+  {
+    "city": "Damoh",
+    "name": "Shrivastav Colony, Damoh",
+    "agency": "MPPCB",
+    "lat": 23.8175,
+    "lon": 79.4462,
+    "code": "#5040"
+  },
+  {
+    "city": "Dewas",
+    "name": "Bhopal Chauraha, Dewas",
+    "agency": "MPPCB",
+    "lat": 22.9683,
+    "lon": 76.0641,
+    "code": "#1404"
+  },
+  {
+    "city": "Gwalior",
+    "name": "City Center, Gwalior",
+    "agency": "MPPCB",
+    "lat": 26.2034,
+    "lon": 78.1933,
+    "code": "#5273"
+  },
+  {
+    "city": "Gwalior",
+    "name": "Phool Bagh, Gwalior",
+    "agency": "Mondelez Ind. Food",
+    "lat": 26.2105,
+    "lon": 78.171,
+    "code": "#5275"
+  },
+  {
+    "city": "Indore",
+    "name": "Chhoti Gwaltoli, Indore",
+    "agency": "MPPCB",
+    "lat": 22.431,
+    "lon": 75.5213,
+    "code": "#5248"
+  },
+  {
+    "city": "Jabalpur",
+    "name": "Marhatal, Jabalpur",
+    "agency": "MPPCB",
+    "lat": 23.1686,
+    "lon": 79.9322,
+    "code": "#5249"
+  },
+  {
+    "city": "Katni",
+    "name": "Gole Bazar, Katni",
+    "agency": "MPPCB",
+    "lat": 23.5002,
+    "lon": 80.2328,
+    "code": "#5250"
+  },
+  {
+    "city": "Maihar",
+    "name": "Sahilara, Maihar",
+    "agency": "KJS Cements",
+    "lat": 24.2613,
+    "lon": 80.7232,
+    "code": "#5068"
+  },
+  {
+    "city": "Mandideep",
+    "name": "Sector-D Industrial Area, Mandideep",
+    "agency": "MPPCB",
+    "lat": 23.1084,
+    "lon": 77.5114,
+    "code": "#1403"
+  },
+  {
+    "city": "Pithampur",
+    "name": "Sector-2 Industrial Area, Pithampur",
+    "agency": "MPPCB",
+    "lat": 22.6248,
+    "lon": 75.6752,
+    "code": "#1402"
+  },
+  {
+    "city": "Ratlam",
+    "name": "Shasthri Nagar, Ratlam",
+    "agency": "IPCA Lab",
+    "lat": 23.3317,
+    "lon": 75.046,
+    "code": "#5042"
+  },
+  {
+    "city": "Sagar",
+    "name": "Deen Dayal Nagar, Sagar",
+    "agency": "MPPCB",
+    "lat": 23.864,
+    "lon": 78.8029,
+    "code": "#5269"
+  },
+  {
+    "city": "Satna",
+    "name": "Bandhavgar Colony, Satna",
+    "agency": "Birla Cement",
+    "lat": 24.5843,
+    "lon": 80.8549,
+    "code": "#1433"
+  },
+  {
+    "city": "Singrauli",
+    "name": "Suryakiran Bhawan NCL, Singrauli",
+    "agency": "MPPCB",
+    "lat": 24.109,
+    "lon": 82.6456,
+    "code": "#1401"
+  },
+  {
+    "city": "Ujjain",
+    "name": "Mahakaleshwar Temple, Ujjain",
+    "agency": "MPPCB",
+    "lat": 23.1827,
+    "lon": 75.7682,
+    "code": "#1400"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Bollaram Industrial Area, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.5409,
+    "lon": 78.3585,
+    "code": "#199"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Central University, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.4601,
+    "lon": 78.3344,
+    "code": "#262"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "ECIL Kapra, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.4704,
+    "lon": 78.567,
+    "code": "#5596"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "ICRISAT Patancheru, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.5184,
+    "lon": 78.2788,
+    "code": "#251"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "IDA Pashamylaram, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.5317,
+    "lon": 78.2189,
+    "code": "#275"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "IITH Kandi, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.5857,
+    "lon": 78.1262,
+    "code": "#5597"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Kokapet, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.3936,
+    "lon": 78.3392,
+    "code": "#5604"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Kompally Municipal Office, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.5449,
+    "lon": 78.4869,
+    "code": "#5599"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Nacharam_TSIIC IALA, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.4294,
+    "lon": 78.5694,
+    "code": "#5600"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "New Malakpet, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.3721,
+    "lon": 78.5086,
+    "code": "#5595"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Ramachandrapuram, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.5285,
+    "lon": 78.2862,
+    "code": "#5602"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Sanathnagar, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.4559,
+    "lon": 78.4332,
+    "code": "#294"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Somajiguda, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.4171,
+    "lon": 78.4574,
+    "code": "#5598"
+  },
+  {
+    "city": "Hyderabad",
+    "name": "Zoo Park, Hyderabad",
+    "agency": "TSPCB",
+    "lat": 17.3497,
+    "lon": 78.4514,
+    "code": "#298"
+  },
+  {
+    "city": "Asansol",
+    "name": "Asansol Court Area, Asansol",
+    "agency": "WBPCB",
+    "lat": 23.6853,
+    "lon": 86.946,
+    "code": "#1418"
+  },
+  {
+    "city": "Durgapur",
+    "name": "Sidhu Kanhu Indoor Stadium, Durgapur",
+    "agency": "WBPCB",
+    "lat": 23.5404,
+    "lon": 87.2892,
+    "code": "#299"
+  },
+  {
+    "city": "Haldia",
+    "name": "Haldia, Haldia",
+    "agency": "WBPCB",
+    "lat": 22.0605,
+    "lon": 88.1097,
+    "code": "#300"
+  },
+  {
+    "city": "Howrah",
+    "name": "Belur Math, Howrah",
+    "agency": "WBPCB",
+    "lat": 22.6298,
+    "lon": 88.352,
+    "code": "#5101"
+  },
+  {
+    "city": "Howrah",
+    "name": "Ghusuri, Howrah",
+    "agency": "WBPCB",
+    "lat": 22.612,
+    "lon": 88.3474,
+    "code": "#274"
+  },
+  {
+    "city": "Howrah",
+    "name": "Padmapukur, Howrah",
+    "agency": "WBPCB",
+    "lat": 22.5687,
+    "lon": 88.2797,
+    "code": "#1416"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Ballygunge, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.5368,
+    "lon": 88.3638,
+    "code": "#5238"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Bidhannagar, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.5816,
+    "lon": 88.41,
+    "code": "#5129"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Fort William, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.5566,
+    "lon": 88.3427,
+    "code": "#5110"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Jadavpur, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.4993,
+    "lon": 88.3692,
+    "code": "#5111"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Rabindra Bharati University, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.6278,
+    "lon": 88.3807,
+    "code": "#296"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Rabindra Sarobar, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.5111,
+    "lon": 88.3514,
+    "code": "#5126"
+  },
+  {
+    "city": "Kolkata",
+    "name": "Victoria, Kolkata",
+    "agency": "WBPCB",
+    "lat": 22.5448,
+    "lon": 88.3404,
+    "code": "#309"
+  },
+  {
+    "city": "Siliguri",
+    "name": "Ward-32 Bapupara, Siliguri",
+    "agency": "WBPCB",
+    "lat": 26.6883,
+    "lon": 88.4127,
+    "code": "#1419"
+  },
+  {
+    "city": "Chennai",
+    "name": "Alandur Bus Depot, Chennai",
+    "agency": "CPCB",
+    "lat": 12.9099,
+    "lon": 80.1077,
+    "code": "#293"
+  },
+  {
+    "city": "Chennai",
+    "name": "Arumbakkam, Chennai",
+    "agency": "TNPCB",
+    "lat": 13.0664,
+    "lon": 80.2112,
+    "code": "#5361"
+  },
+  {
+    "city": "Chennai",
+    "name": "Kodungaiyur, Chennai",
+    "agency": "TNPCB",
+    "lat": 13.1278,
+    "lon": 80.2642,
+    "code": "#5365"
+  },
+  {
+    "city": "Chennai",
+    "name": "Manali Village, Chennai",
+    "agency": "TNPCB",
+    "lat": 13.1662,
+    "lon": 80.2584,
+    "code": "#5092"
+  },
+  {
+    "city": "Chennai",
+    "name": "Manali, Chennai",
+    "agency": "CPCB",
+    "lat": 13.1645,
+    "lon": 80.2629,
+    "code": "#306"
+  },
+  {
+    "city": "Chennai",
+    "name": "Perungudi, Chennai",
+    "agency": "TNPCB",
+    "lat": 12.9533,
+    "lon": 80.2357,
+    "code": "#5363"
+  },
+  {
+    "city": "Chennai",
+    "name": "Royapuram, Chennai",
+    "agency": "TNPCB",
+    "lat": 13.1036,
+    "lon": 80.2909,
+    "code": "#5364"
+  },
+  {
+    "city": "Chennai",
+    "name": "Velachery Res. Area, Chennai",
+    "agency": "CPCB",
+    "lat": 13.0052,
+    "lon": 80.2398,
+    "code": "#288"
+  },
+  {
+    "city": "Coimbatore",
+    "name": "SIDCO Kurichi, Coimbatore",
+    "agency": "TNPCB",
+    "lat": 10.9425,
+    "lon": 76.979,
+    "code": "#5094"
+  },
+  {
+    "city": "Gummidipoondi",
+    "name": "Anthoni Pillai Nagar, Gummidipoondi",
+    "agency": "TNPCB",
+    "lat": 13.4127,
+    "lon": 80.1081,
+    "code": "#5362"
+  },
+  {
+    "city": "Thoothukudi",
+    "name": "Meelavittan, Thoothukudi",
+    "agency": "TNPCB",
+    "lat": 8.8164,
+    "lon": 78.099,
+    "code": "#5367"
+  },
+  {
+    "city": "Ajmer",
+    "name": "Civil Lines, Ajmer",
+    "agency": "RSPCB",
+    "lat": 26.4709,
+    "lon": 74.6466,
+    "code": "#1392"
+  },
+  {
+    "city": "Alwar",
+    "name": "Moti Doongri, Alwar",
+    "agency": "RSPCB",
+    "lat": 27.5548,
+    "lon": 76.6115,
+    "code": "#1390"
+  },
+  {
+    "city": "Bhiwadi",
+    "name": "RIICO Ind. Area III, Bhiwadi",
+    "agency": "RSPCB",
+    "lat": 28.1949,
+    "lon": 76.8623,
+    "code": "#1391"
+  },
+  {
+    "city": "Jaipur",
+    "name": "Adarsh Nagar, Jaipur",
+    "agency": "RSPCB",
+    "lat": 26.9029,
+    "lon": 75.8369,
+    "code": "#1393"
+  },
+  {
+    "city": "Jaipur",
+    "name": "Police Commissionerate, Jaipur",
+    "agency": "RSPCB",
+    "lat": 26.9164,
+    "lon": 75.7995,
+    "code": "#134"
+  },
+  {
+    "city": "Jaipur",
+    "name": "Shastri Nagar, Jaipur",
+    "agency": "RSPCB",
+    "lat": 26.9503,
+    "lon": 75.7309,
+    "code": "#1396"
+  },
+  {
+    "city": "Jodhpur",
+    "name": "Collectorate, Jodhpur",
+    "agency": "RSPCB",
+    "lat": 26.2682,
+    "lon": 73.0194,
+    "code": "#136"
+  },
+  {
+    "city": "Kota",
+    "name": "Shrinath Puram, Kota",
+    "agency": "RSPCB",
+    "lat": 25.1439,
+    "lon": 75.8213,
+    "code": "#1394"
+  },
+  {
+    "city": "Pali",
+    "name": "Indira Colony Vistar, Pali",
+    "agency": "RSPCB",
+    "lat": 25.7711,
+    "lon": 73.3402,
+    "code": "#1395"
+  },
+  {
+    "city": "Udaipur",
+    "name": "Ashok Nagar, Udaipur",
+    "agency": "RSPCB",
+    "lat": 24.5886,
+    "lon": 73.6321,
+    "code": "#1397"
+  },
+  {
+    "city": "Eloor",
+    "name": "Udyogamandal, Eloor",
+    "agency": "Kerala PCB",
+    "lat": 10.0732,
+    "lon": 76.3028,
+    "code": "#5105"
+  },
+  {
+    "city": "Ernakulam",
+    "name": "Kacheripady, Ernakulam",
+    "agency": "Kerala PCB",
+    "lat": 9.9857,
+    "lon": 76.2813,
+    "code": "#5272"
+  },
+  {
+    "city": "Kannur",
+    "name": "Thavakkara, Kannur",
+    "agency": "Kerala PCB",
+    "lat": 11.875,
+    "lon": 75.3732,
+    "code": "#5276"
+  },
+  {
+    "city": "Kochi",
+    "name": "Vyttila, Kochi",
+    "agency": "Kerala PCB",
+    "lat": 9.9694,
+    "lon": 76.3212,
+    "code": "#5270"
+  },
+  {
+    "city": "Kollam",
+    "name": "Polayathode, Kollam",
+    "agency": "Kerala PCB",
+    "lat": 8.8787,
+    "lon": 76.6073,
+    "code": "#5334"
+  },
+  {
+    "city": "Kozhikode",
+    "name": "Palayam, Kozhikode",
+    "agency": "Kerala PCB",
+    "lat": 11.2491,
+    "lon": 75.7844,
+    "code": "#5271"
+  },
+  {
+    "city": "Thiruvananthapuram",
+    "name": "Kariavattom, Thiruvananthapuram",
+    "agency": "Kerala PCB",
+    "lat": 8.5637,
+    "lon": 76.8865,
+    "code": "#5331"
+  },
+  {
+    "city": "Thiruvananthapuram",
+    "name": "Plammoodu, Thiruvananthapuram",
+    "agency": "Kerala PCB",
+    "lat": 8.5149,
+    "lon": 76.9436,
+    "code": "#252"
+  },
+  {
+    "city": "Thrissur",
+    "name": "Corporation Ground, Thrissur",
+    "agency": "Kerala PCB",
+    "lat": 10.5324,
+    "lon": 76.2159,
+    "code": "#5390"
+  },
+  {
+    "city": "Amritsar",
+    "name": "Golden Temple, Amritsar",
+    "agency": "PPCB",
+    "lat": 31.62,
+    "lon": 74.8765,
+    "code": "#256"
+  },
+  {
+    "city": "Bathinda",
+    "name": "Hardev Nagar, Bathinda",
+    "agency": "PPCB",
+    "lat": 30.233,
+    "lon": 74.9078,
+    "code": "#1549"
+  },
+  {
+    "city": "Jalandhar",
+    "name": "Civil Line, Jalandhar",
+    "agency": "PPCB",
+    "lat": 31.3219,
+    "lon": 75.5789,
+    "code": "#1438"
+  },
+  {
+    "city": "Khanna",
+    "name": "Kalal Majra, Khanna",
+    "agency": "PPCB",
+    "lat": 30.7361,
+    "lon": 76.2097,
+    "code": "#1450"
+  },
+  {
+    "city": "Ludhiana",
+    "name": "Punjab Agricultural University, Ludhiana",
+    "agency": "PPCB",
+    "lat": 30.9028,
+    "lon": 75.8086,
+    "code": "#253"
+  },
+  {
+    "city": "Mandi Gobindgarh",
+    "name": "RIMT University, Mandi Gobindgarh",
+    "agency": "PPCB",
+    "lat": 30.65,
+    "lon": 76.3314,
+    "code": "#255"
+  },
+  {
+    "city": "Patiala",
+    "name": "Model Town, Patiala",
+    "agency": "PPCB",
+    "lat": 30.3494,
+    "lon": 76.3666,
+    "code": "#1437"
+  },
+  {
+    "city": "Rupnagar",
+    "name": "Ratanpura, Rupnagar",
+    "agency": "Ambuja Cements",
+    "lat": 31.0325,
+    "lon": 76.5623,
+    "code": "#1538"
+  },
+  {
+    "city": "Amaravati",
+    "name": "Secretariat, Amaravati",
+    "agency": "APPCB",
+    "lat": 16.5151,
+    "lon": 80.5182,
+    "code": "#1406"
+  },
+  {
+    "city": "Rajamahendravaram",
+    "name": "Anand Kala Kshetram, Rajamahendravaram",
+    "agency": "APPCB",
+    "lat": 16.9873,
+    "lon": 81.7363,
+    "code": "#1399"
+  },
+  {
+    "city": "Tirupati",
+    "name": "Tirumala, Tirupati",
+    "agency": "APPCB",
+    "lat": 13.67,
+    "lon": 79.35,
+    "code": "#258"
+  },
+  {
+    "city": "Visakhapatnam",
+    "name": "GVM Corporation, Visakhapatnam",
+    "agency": "APPCB",
+    "lat": 17.72,
+    "lon": 83.3,
+    "code": "#260"
+  },
+  {
+    "city": "Chandigarh",
+    "name": "Sector 22, Chandigarh",
+    "agency": "CPCC",
+    "lat": 30.7356,
+    "lon": 76.7757,
+    "code": "#5491"
+  },
+  {
+    "city": "Chandigarh",
+    "name": "Sector-25, Chandigarh",
+    "agency": "CPCC",
+    "lat": 30.7515,
+    "lon": 76.7629,
+    "code": "#5127"
+  },
+  {
+    "city": "Chandigarh",
+    "name": "Sector-53, Chandigarh",
+    "agency": "CPCC",
+    "lat": 30.7199,
+    "lon": 76.7386,
+    "code": "#5582"
+  },
+  {
+    "city": "Guwahati",
+    "name": "Pan Bazaar, Guwahati",
+    "agency": "APCB",
+    "lat": 26.1875,
+    "lon": 91.7442,
+    "code": "#5417"
+  },
+  {
+    "city": "Guwahati",
+    "name": "Railway Colony, Guwahati",
+    "agency": "APCB",
+    "lat": 26.1817,
+    "lon": 91.7806,
+    "code": "#5073"
+  },
+  {
+    "city": "Bhilai",
+    "name": "Civic Center, Bhilai",
+    "agency": "Bhilai Steel Plant",
+    "lat": 21.1856,
+    "lon": 81.3432,
+    "code": "#5536"
+  },
+  {
+    "city": "Bilaspur",
+    "name": "Mangala, Bilaspur",
+    "agency": "NTPC",
+    "lat": 22.0881,
+    "lon": 82.1374,
+    "code": "#5503"
+  },
+  {
+    "city": "Imphal",
+    "name": "DM College of Science, Imphal",
+    "agency": "Manipur PCB",
+    "lat": 24.8207,
+    "lon": 93.9423,
+    "code": "#5592"
+  },
+  {
+    "city": "Imphal",
+    "name": "Manipur University, Imphal",
+    "agency": "Manipur PCB",
+    "lat": 24.7524,
+    "lon": 93.9286,
+    "code": "#5591"
+  },
+  {
+    "city": "Shillong",
+    "name": "JN Stadium, Shillong",
+    "agency": "Meghalaya PCB",
+    "lat": 25.5803,
+    "lon": 91.8943,
+    "code": "#5593"
+  },
+  {
+    "city": "Shillong",
+    "name": "Lumpyngngad, Shillong",
+    "agency": "Meghalaya PCB",
+    "lat": 25.5586,
+    "lon": 91.8985,
+    "code": "#5131"
+  },
+  {
+    "city": "Brajrajnagar",
+    "name": "GM Office, Brajrajnagar",
+    "agency": "OSPCB",
+    "lat": 21.8005,
+    "lon": 83.8397,
+    "code": "#1410"
+  },
+  {
+    "city": "Talcher",
+    "name": "Talcher Coalfields,Talcher",
+    "agency": "OSPCB",
+    "lat": 20.9361,
+    "lon": 85.1707,
+    "code": "#1408"
+  },
+  {
+    "city": "Agartala",
+    "name": "Bardowali, Agartala",
+    "agency": "Tripura SPCB",
+    "lat": 23.8175,
+    "lon": 91.2727,
+    "code": "#5587"
+  },
+  {
+    "city": "Agartala",
+    "name": "Kunjaban, Agartala",
+    "agency": "Tripura SPCB",
+    "lat": 23.8628,
+    "lon": 91.2887,
+    "code": "#5377"
+  },
+  {
+    "city": "Naharlagun",
+    "name": "Naharlagun, Naharlagun",
+    "agency": "APSPCB",
+    "lat": 27.1034,
+    "lon": 93.6796,
+    "code": "#5446"
+  },
+  {
+    "city": "Baddi",
+    "name": "HIMUDA Complex Phase-1, Baddi",
+    "agency": "HPPCB",
+    "lat": 30.9439,
+    "lon": 76.802,
+    "code": "#5586"
+  },
+  {
+    "city": "Srinagar",
+    "name": "Rajbagh, Srinagar",
+    "agency": "JKSPCB",
+    "lat": 34.0662,
+    "lon": 74.8198,
+    "code": "#5424"
+  },
+  {
+    "city": "Jorapokhar",
+    "name": "Tata Stadium, Jorapokhar",
+    "agency": "JSPCB",
+    "lat": 23.7079,
+    "lon": 86.4147,
+    "code": "#254"
+  },
+  {
+    "city": "Aizawl",
+    "name": "Sikulpuikawn, Aizawl",
+    "agency": "Mizoram PCB",
+    "lat": 23.7176,
+    "lon": 92.7193,
+    "code": "#5346"
+  },
+  {
+    "city": "Kohima",
+    "name": "PWD Juction, Kohima",
+    "agency": "NPCB",
+    "lat": 25.6635,
+    "lon": 94.099,
+    "code": "#5375"
+  },
+  {
+    "city": "Puducherry",
+    "name": "Jawahar Nagar, Puducherry",
+    "agency": "PPCC",
+    "lat": 11.9309,
+    "lon": 79.8027,
+    "code": "#5423"
+  },
+  {
+    "city": "Gangtok",
+    "name": "Zero Point GICI, Gangtok",
+    "agency": "SSPCB",
+    "lat": 27.3385,
+    "lon": 88.6141,
+    "code": "#5590"
+  },
+  {
+    "city": "Dehradun",
+    "name": "Doon University, Dehradun",
+    "agency": "UKPCB",
+    "lat": 30.2694,
+    "lon": 78.0442,
+    "code": "#5594"
+  }
+]
