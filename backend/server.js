@@ -13,6 +13,7 @@ const https = require("https");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "..", "frontend")));
 
 const PORT = process.env.PORT || 4000;
 const DATA_DIR = path.join(__dirname, "..", "data", "processed");
