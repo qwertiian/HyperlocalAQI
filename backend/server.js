@@ -291,7 +291,14 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   let finalAqi;
   let pm25, pm10, no2, so2;
 
-  if (liveAir && liveAir.liveAqi) {
+  // If click is right on a station (distance <= 2 km), use the station's exact live value for 100% alignment
+  if (minDistance <= 2.0 && nearestStation && nearestStation.value) {
+    finalAqi = nearestStation.value;
+    pm25 = liveAir ? liveAir.pm25 : Number((finalAqi * 0.45).toFixed(1));
+    pm10 = liveAir ? liveAir.pm10 : Number((finalAqi * 0.75).toFixed(1));
+    no2 = liveAir ? liveAir.no2 : Number((Math.min(finalAqi * 0.25 + 15, 120)).toFixed(1));
+    so2 = liveAir ? liveAir.so2 : Number((Math.min(finalAqi * 0.08 + 5, 45)).toFixed(1));
+  } else if (liveAir && liveAir.liveAqi) {
     finalAqi = liveAir.liveAqi;
     pm25 = liveAir.pm25;
     pm10 = liveAir.pm10;
@@ -343,6 +350,108 @@ app.get("/api/aqi/interpolate", async (req, res) => {
 app.get("/api/aqi/grid", (req, res) => {
   const data = readJSON("idw_grid.json", { stations: [], grid: [] });
   res.json(data);
+});
+
+// Grounded LLM Health Advisory (Ollama LLaMA 3.1 8B with Dynamic Fallback)
+app.get("/api/advisory", (req, res) => {
+  const { aqi = 50, age = "adult", respiratory = "false", cardiac = "false", pregnant = "false", activity = "moderate" } = req.query;
+
+  const isResp = respiratory === "true" || respiratory === true;
+  const isCard = cardiac === "true" || cardiac === true;
+  const isPreg = pregnant === "true" || pregnant === true;
+  const numericAqi = Number(aqi);
+
+  function getDynamicFallback(val) {
+    let rLevel = "LOW RISK";
+    let rColor = "#10b981";
+    let summary = "Air quality is good. Minimal or no risk for all health groups.";
+    let mask = "No Mask Required";
+    let maskCol = "#10b981";
+    let dos = ["Enjoy outdoor activities", "Ventilate indoor spaces naturally"];
+    let donts = ["No specific restrictions necessary"];
+
+    if (val <= 50) {
+      rLevel = "LOW RISK";
+      rColor = "#10b981";
+      summary = "Air quality is satisfactory. Enjoy outdoor activities safely.";
+    } else if (val <= 100) {
+      rLevel = "SATISFACTORY";
+      rColor = "#84cc16";
+      summary = "Air quality is acceptable. Sensitive individuals should monitor prolonged outdoor exertion.";
+      mask = "Cloth Mask Optional";
+      maskCol = "#84cc16";
+      dos = ["Maintain normal physical exercise", "Keep windows open for ventilation"];
+      donts = ["Avoid idling vehicles near residential areas"];
+    } else if (val <= 200) {
+      rLevel = "MODERATE RISK";
+      rColor = "#f59e0b";
+      summary = "Air quality is moderate. Children, elderly, and people with respiratory or cardiac conditions should limit prolonged outdoor exertion.";
+      mask = "N95 Respirator";
+      maskCol = "#f97316";
+      dos = ["Wear N95 mask outdoors near traffic", "Operate indoor air purifiers"];
+      donts = ["Avoid heavy outdoor exertion during peak traffic hours"];
+    } else if (val <= 300) {
+      rLevel = "HIGH HEALTH RISK";
+      rColor = "#ef4444";
+      summary = "Air quality is poor. Wear N95 masks outdoors, avoid outdoor exercise, and keep air purifiers running.";
+      mask = "N95 / FFP2 Respirator Required";
+      maskCol = "#ef4444";
+      dos = ["Stay indoors with windows closed", "Use HEPA air purifiers"];
+      donts = ["Avoid all outdoor athletic workouts or heavy labor"];
+    } else {
+      rLevel = "SEVERE CRITICAL RISK";
+      rColor = "#881337";
+      summary = "Emergency pollution levels. Stay indoors continuously and avoid all outdoor physical exposure.";
+      mask = "N95 / N99 Filter Mask Mandatory";
+      maskCol = "#881337";
+      dos = ["Seal indoor living areas", "Maintain medical inhaler availability"];
+      donts = ["Do not step outdoors without N95 mask"];
+    }
+
+    if (isResp || isCard || isPreg) {
+      if (val > 50 && rLevel === "SATISFACTORY") {
+        rLevel = "MODERATE RISK";
+        rColor = "#f59e0b";
+      }
+    }
+
+    return {
+      aqi: val,
+      category: getCategory(val).category,
+      risk_level: rLevel,
+      risk_color: rColor,
+      executive_summary: summary,
+      dos: dos,
+      donts: donts,
+      mask_recommendation: mask,
+      mask_color: maskCol,
+      estimated_pm25: Number((val * 0.45).toFixed(1)),
+      who_guideline_multiplier: `${(val * 0.03).toFixed(1)}x WHO Limit`,
+      medical_warnings: isResp ? ["Keep prescription inhaler accessible at all times."] : ["Monitor breathing comfort."],
+      generated_by: "grounded_cpcb_engine",
+    };
+  }
+
+  const args = [ADVISORY_SCRIPT, "--aqi", String(aqi), "--age", age, "--activity", activity];
+  if (isResp) args.push("--respiratory");
+  if (isCard) args.push("--cardiac");
+  if (isPreg) args.push("--pregnant");
+
+  const venvPy = path.join(__dirname, "..", ".venv", "bin", "python");
+  const pyCmd = fs.existsSync(venvPy) ? venvPy : (process.env.PYTHON_PATH || "python3");
+  const py = spawn(pyCmd, args);
+  let out = "";
+  let err = "";
+  py.stdout.on("data", (d) => (out += d));
+  py.stderr.on("data", (d) => (err += d));
+  py.on("close", (code) => {
+    try {
+      const jsonRes = JSON.parse(out.trim());
+      return res.json(jsonRes);
+    } catch (e) {
+      return res.json(getDynamicFallback(numericAqi));
+    }
+  });
 });
 
 // Forecasts per station
