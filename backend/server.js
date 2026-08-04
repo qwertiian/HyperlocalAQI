@@ -352,8 +352,96 @@ app.get("/api/aqi/grid", (req, res) => {
   res.json(data);
 });
 
-// Grounded LLM Health Advisory (Ollama LLaMA 3.1 8B with Dynamic Fallback)
-app.get("/api/advisory", (req, res) => {
+// Groq Cloud LLaMA 3.1 8B API Helper Function
+function fetchGroqAdvisory({ aqi, age, respiratory, cardiac, pregnant, activity }) {
+  return new Promise((resolve, reject) => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return reject(new Error("GROQ_API_KEY is missing"));
+
+    const val = Number(aqi);
+    const prompt = `You are a clinical pulmonologist air quality health advisor. Generate a personalized advisory for:
+AQI: ${val}
+Age: ${age}
+Respiratory Condition (Asthma/COPD): ${respiratory}
+Cardiac Condition: ${cardiac}
+Pregnancy: ${pregnant}
+Planned Activity: ${activity}
+
+Respond ONLY with a valid JSON object (no markdown, no backticks) with these exact keys:
+{
+  "executive_summary": "1-2 concise clinical guidance sentences",
+  "dos": ["Recommended Action 1", "Recommended Action 2"],
+  "donts": ["Precautionary Avoid 1", "Precautionary Avoid 2"],
+  "mask_recommendation": "e.g. N95 Respirator",
+  "medical_warnings": ["1 vital medical warning for patient profile"]
+}`;
+
+    const data = JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        { role: "system", content: "You are a board-certified clinical pulmonologist and environmental health expert. Output valid JSON ONLY." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.2,
+      response_format: { type: "json_object" }
+    });
+
+    const options = {
+      hostname: "api.groq.com",
+      path: "/openai/v1/chat/completions",
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(data)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let body = "";
+      res.on("data", (chunk) => (body += chunk));
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(body);
+          const rawContent = parsed.choices[0].message.content.trim();
+          const cleanJson = JSON.parse(rawContent.replace(/```json|```/g, "").trim());
+
+          let rLevel = "LOW RISK";
+          let rColor = "#10b981";
+          if (val > 300) { rLevel = "SEVERE CRITICAL RISK"; rColor = "#881337"; }
+          else if (val > 200) { rLevel = "HIGH HEALTH RISK"; rColor = "#ef4444"; }
+          else if (val > 100) { rLevel = "MODERATE RISK"; rColor = "#f59e0b"; }
+          else if (val > 50) { rLevel = "SATISFACTORY"; rColor = "#84cc16"; }
+
+          resolve({
+            aqi: val,
+            category: getCategory(val).category,
+            risk_level: rLevel,
+            risk_color: rColor,
+            executive_summary: cleanJson.executive_summary || "Air quality requires monitoring before outdoor activities.",
+            dos: cleanJson.dos || ["Wear N95 respirator outdoors", "Operate indoor HEPA air purifiers"],
+            donts: cleanJson.donts || ["Avoid heavy morning exercise near high-traffic corridors"],
+            mask_recommendation: cleanJson.mask_recommendation || (val > 100 ? "N95 Respirator" : "Cloth Mask Optional"),
+            mask_color: val > 100 ? "#f97316" : "#84cc16",
+            estimated_pm25: Number((val * 0.45).toFixed(1)),
+            who_guideline_multiplier: `${(val * 0.03).toFixed(1)}x WHO Limit`,
+            medical_warnings: cleanJson.medical_warnings || ["Keep rescue inhalers accessible."],
+            generated_by: "Groq LLaMA 3.1 8B Cloud Engine",
+          });
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+
+    req.on("error", (err) => reject(err));
+    req.write(data);
+    req.end();
+  });
+}
+
+// Grounded LLM Health Advisory (Groq LLaMA 3.1 8B Cloud API / Ollama / Dynamic Fallback)
+app.get("/api/advisory", async (req, res) => {
   const { aqi = 50, age = "adult", respiratory = "false", cardiac = "false", pregnant = "false", activity = "moderate" } = req.query;
 
   const isResp = respiratory === "true" || respiratory === true;
@@ -432,6 +520,17 @@ app.get("/api/advisory", (req, res) => {
     };
   }
 
+  // 1. Prioritize Groq Cloud LLaMA 3.1 API if GROQ_API_KEY is available
+  if (process.env.GROQ_API_KEY) {
+    try {
+      const groqRes = await fetchGroqAdvisory({ aqi: numericAqi, age, respiratory: isResp, cardiac: isCard, pregnant: isPreg, activity });
+      return res.json(groqRes);
+    } catch (err) {
+      console.warn("Groq API call error, using grounded fallback:", err.message);
+    }
+  }
+
+  // 2. Local Python / Ollama Fallback
   const args = [ADVISORY_SCRIPT, "--aqi", String(aqi), "--age", age, "--activity", activity];
   if (isResp) args.push("--respiratory");
   if (isCard) args.push("--cardiac");
