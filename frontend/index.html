@@ -901,12 +901,13 @@ let map, forecastChart, clickPinMarker;
 let allCitiesList = [];
 
 function getAqiColor(v) {
-  if (v <= 50) return "#10b981";
-  if (v <= 100) return "#84cc16";
-  if (v <= 200) return "#eab308";
-  if (v <= 300) return "#f97316";
-  if (v <= 400) return "#ef4444";
-  return "#881337";
+  // CPCB Indian AQI color scale — visually distinct for all 6 categories
+  if (v <= 50)  return "#059669";  // Good         — DARK emerald green
+  if (v <= 100) return "#84cc16";  // Satisfactory — BRIGHT lime green (clearly lighter)
+  if (v <= 200) return "#f59e0b";  // Moderate     — AMBER yellow
+  if (v <= 300) return "#ea580c";  // Poor         — DEEP orange
+  if (v <= 400) return "#dc2626";  // Very Poor    — BRIGHT red
+  return "#7c1d1d";                // Severe       — DARK crimson/maroon
 }
 
 function switchTab(btn, tabId) {
@@ -987,6 +988,21 @@ function initMap() {
     }
   });
 }
+
+// Instant panel update from station click (no API call delay)
+function updateActiveLocationDirect({ aqi, category, color, stationName, stationCity }) {
+  document.getElementById("activeAqiVal").textContent = aqi;
+  document.getElementById("activeAqiVal").style.color = color;
+  document.getElementById("activeCategory").textContent = `${category} Air Quality`;
+  document.getElementById("activeCategory").style.color = color;
+  document.getElementById("activeCityTag").textContent = stationCity;
+  const copilotTag = document.getElementById("copilotLocationTag");
+  if (copilotTag) copilotTag.textContent = stationCity;
+  document.getElementById("nearestStationName").textContent = stationName;
+  document.getElementById("nearestStationDist").textContent = "at station";
+  document.getElementById("aqiInput").value = aqi;
+}
+
 
 function updateActiveLocation(data) {
   if (!data || data.noData) return;
@@ -1197,66 +1213,59 @@ async function loadSpatialGrid() {
       });
     }
 
-    // Station markers — fetch live WAQI AQI per station to avoid all showing same static value
+    // Station markers — show CPCB dataset AQI; full live fusion loads only on click
     if (data.stations && data.stations.length) {
       document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Stations • Postgres • Nationwide`;
 
       data.stations.forEach(s => {
-        // Start with static dataset value, then enrich async with live interpolated AQI
-        const initColor = getAqiColor(s.value);
-        const marker = L.circleMarker([s.lat, s.lon], {
+        const stAqi = s.value || 0;
+        const stColor = getAqiColor(stAqi);
+        const stCat = getCategory(stAqi);
+
+        L.circleMarker([s.lat, s.lon], {
           radius: 6,
           color: "#ffffff",
           weight: 1.5,
-          fillColor: initColor,
+          fillColor: stColor,
           fillOpacity: 1,
         }).addTo(map)
           .bindPopup(`
-            <div style="padding:4px; min-width:160px;">
+            <div style="padding:4px; min-width:175px;">
               <div style="font-size:13px; font-weight:700; color:#0f172a; line-height:1.3;">${s.name || s.station_id}</div>
               <div style="font-size:11px; color:#64748b; margin-top:2px;">📍 ${s.city || 'India'}</div>
-              <div style="font-size:22px; font-weight:800; color:${initColor}; margin-top:6px;" id="marker-aqi-${s.station_id}">${s.value} <span style="font-size:12px; font-weight:600;">AQI</span></div>
-              <div style="font-size:11px; font-weight:700; color:${initColor}; margin-top:2px;" id="marker-cat-${s.station_id}">${getCategory(s.value)}</div>
-              <div style="font-size:10px; color:#94a3b8; margin-top:4px;" id="marker-src-${s.station_id}">📡 Loading live feed...</div>
+              <div style="font-size:22px; font-weight:800; color:${stColor}; margin-top:6px;">${stAqi} <span style="font-size:12px; font-weight:600;">AQI</span></div>
+              <div style="font-size:11px; font-weight:700; color:${stColor};">${stCat}</div>
+              <div style="font-size:10px; color:#94a3b8; margin-top:5px; border-top:1px solid #f1f5f9; padding-top:5px;">📡 CPCB CAAQMS Ground Dataset<br/>Click for Live Fusion AQI →</div>
             </div>
           `)
           .on("click", async (e) => {
             if (e && e.originalEvent) L.DomEvent.stopPropagation(e);
             if (clickPinMarker) { map.removeLayer(clickPinMarker); clickPinMarker = null; }
-            try {
-              const liveRes = await fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`);
-              const liveData = await liveRes.json();
-              updateActiveLocation(liveData);
-              loadWeather(s.lat, s.lon, `${s.name || s.city}, ${s.city}`);
-              loadForecastChart(s.station_id);
-            } catch(err) {
-              updateActiveLocation({ aqi: s.value, category: getCategory(s.value), color: initColor, nearestStation: { name: s.name, city: s.city, distanceKm: 0 } });
-            }
-          });
 
-        // Async enrich each station marker with its own live WAQI feed
-        fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`)
-          .then(r => r.json())
-          .then(live => {
-            if (live && live.aqi != null) {
-              const liveColor = getAqiColor(live.aqi);
-              marker.setStyle({ fillColor: liveColor });
-              // Update popup content if open
-              const el = document.getElementById(`marker-aqi-${s.station_id}`);
-              const catEl = document.getElementById(`marker-cat-${s.station_id}`);
-              const srcEl = document.getElementById(`marker-src-${s.station_id}`);
-              if (el) { el.textContent = `${live.aqi} AQI`; el.style.color = liveColor; }
-              if (catEl) { catEl.textContent = live.category; catEl.style.color = liveColor; }
-              if (srcEl) srcEl.textContent = `📡 ${live.source || 'Live Fusion Feed'}`;
-            }
-          })
-          .catch(() => {});
+            // Immediately update panel with this station's own CPCB dataset value (instant, no lag)
+            updateActiveLocationDirect({
+              aqi: stAqi, category: stCat, color: stColor,
+              stationName: s.name || s.station_id,
+              stationCity: s.city || 'India',
+              lat: s.lat, lon: s.lon, stationId: s.station_id,
+            });
+
+            // Non-blocking live fusion fetch to update panel further
+            fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`)
+              .then(r => r.json())
+              .then(live => { if (live && live.aqi != null) updateActiveLocation(live); })
+              .catch(() => {});
+
+            loadWeather(s.lat, s.lon, s.name || s.city);
+            loadForecastChart(s.station_id);
+          });
       });
     }
   } catch (e) {
     console.error("Could not load spatial grid", e);
   }
 }
+
 
 function getCategory(aqi) {
   if (aqi <= 50) return "Good";
