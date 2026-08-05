@@ -641,7 +641,7 @@
   <div class="map-wrapper">
     <div class="map-overlay-card">
       <span style="font-size:16px;">🔍</span>
-      <input type="text" id="citySearch" list="citiesList" placeholder="Search any city in India..." onchange="onCitySelected()" />
+      <input type="text" id="citySearch" list="citiesList" placeholder="Search any city in India..." oninput="onCityInput()" onkeydown="onCityKeydown(event)" />
       <datalist id="citiesList"></datalist>
     </div>
     <div class="click-banner">
@@ -1055,6 +1055,9 @@ async function loadCitiesDirectory() {
     const data = await res.json();
     allCitiesList = data.cities || [];
 
+    // Alphabetical Sorting for easy user discovery
+    allCitiesList.sort((a, b) => a.city.localeCompare(b.city));
+
     const datalist = document.getElementById("citiesList");
     datalist.innerHTML = "";
     allCitiesList.forEach(c => {
@@ -1067,15 +1070,58 @@ async function loadCitiesDirectory() {
   }
 }
 
-function onCitySelected() {
-  const val = document.getElementById("citySearch").value.trim().toLowerCase();
-  const found = allCitiesList.find(c => c.city.toLowerCase() === val);
+async function executeCitySearch(query) {
+  if (!query) return;
+  const q = query.trim().toLowerCase();
+  if (!q) return;
+
+  // 1. Exact match, 2. Starts-with match, 3. Contains match
+  let found = allCitiesList.find(c => c.city.toLowerCase() === q);
+  if (!found) found = allCitiesList.find(c => c.city.toLowerCase().startsWith(q));
+  if (!found) found = allCitiesList.find(c => c.city.toLowerCase().includes(q));
+
   if (found) {
+    document.getElementById("citySearch").value = found.city;
     flyToCity(found.lat, found.lon, found.city);
-    document.getElementById("aqiInput").value = found.aqi;
-    document.getElementById("activeCityTag").textContent = found.city;
-    document.getElementById("activeAqiVal").textContent = found.aqi;
-    document.getElementById("activeAqiVal").style.color = found.color;
+
+    if (clickPinMarker) map.removeLayer(clickPinMarker);
+    clickPinMarker = L.marker([found.lat, found.lon]).addTo(map)
+      .bindPopup(`📍 Querying live AQI for ${found.city}...`)
+      .openPopup();
+
+    try {
+      const res = await fetch(`${API_BASE}/aqi/interpolate?lat=${found.lat}&lon=${found.lon}`);
+      const data = await res.json();
+      if (data && data.aqi != null) {
+        updateActiveLocation(data);
+        loadWeather(found.lat, found.lon, found.city);
+        clickPinMarker.setPopupContent(`
+          <div style="padding:4px;">
+            <div style="font-size:12px; font-weight:700; color:#64748b;">📍 ${found.city} Live AQI</div>
+            <div style="font-size:20px; font-weight:800; color:${data.color}; margin-top:2px;">${data.aqi} <span style="font-size:13px;">${data.category}</span></div>
+          </div>
+        `).openPopup();
+      }
+    } catch(e) {
+      console.warn("City search interpolation fetch error", e);
+    }
+  }
+}
+
+function onCityInput() {
+  const val = document.getElementById("citySearch").value.trim().toLowerCase();
+  // Check if input value matches an option in datalist exactly (e.g. user clicked dropdown option)
+  const exactMatch = allCitiesList.find(c => c.city.toLowerCase() === val);
+  if (exactMatch) {
+    executeCitySearch(exactMatch.city);
+  }
+}
+
+function onCityKeydown(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const val = document.getElementById("citySearch").value;
+    executeCitySearch(val);
   }
 }
 

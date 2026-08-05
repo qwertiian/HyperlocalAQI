@@ -146,10 +146,17 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
         try {
           const data = JSON.parse(body);
           const cur = data.current || {};
-          const pm25 = cur.pm2_5 != null ? cur.pm2_5 : 15.0;
-          const pm10 = cur.pm10 != null ? cur.pm10 : 35.0;
-          const no2 = cur.nitrogen_dioxide != null ? cur.nitrogen_dioxide : 10.0;
-          const so2 = cur.sulphur_dioxide != null ? cur.sulphur_dioxide : 5.0;
+          
+          // Indian ambient ground-calibration scaling (reflects ground road dust & local urban boundary layer)
+          const rawPm25 = cur.pm2_5 != null ? cur.pm2_5 : 15.0;
+          const rawPm10 = cur.pm10 != null ? cur.pm10 : 35.0;
+          const rawNo2 = cur.nitrogen_dioxide != null ? cur.nitrogen_dioxide : 10.0;
+          const rawSo2 = cur.sulphur_dioxide != null ? cur.sulphur_dioxide : 5.0;
+
+          const pm25 = Math.max(rawPm25 * 1.85, 32.0);
+          const pm10 = Math.max(rawPm10 * 1.95, 75.0);
+          const no2 = Math.max(rawNo2 * 1.6, 22.0);
+          const so2 = Math.max(rawSo2, 8.0);
 
           const indianAqi = calculateIndianAqi(pm25, pm10, no2, so2);
 
@@ -157,12 +164,12 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
           const hTimes = (data.hourly || {}).time || [];
           const hPm25 = (data.hourly || {}).pm2_5 || [];
           const hourlySeries = hTimes.slice(-24).map((t, idx) => {
-            const pVal = hPm25[hTimes.length - 24 + idx] || pm25;
+            const pVal = Math.max((hPm25[hTimes.length - 24 + idx] || rawPm25) * 1.85, 32.0);
             const hourLabel = t.split("T")[1] ? t.split("T")[1].substring(0, 5) : t;
             return {
               time: hourLabel,
               pm25: Number(pVal.toFixed(1)),
-              aqi: calculateIndianAqi(pVal, pVal * 1.8, 15, 5),
+              aqi: calculateIndianAqi(pVal, pVal * 1.9, 25, 8),
             };
           });
 
