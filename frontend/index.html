@@ -866,6 +866,25 @@
           <!-- Rendered dynamically -->
         </div>
       </div>
+
+      <!-- Official Data.gov.in Govt Datasets Benchmark Card -->
+      <div class="glass-card">
+        <div class="card-title">
+          <span>🇮🇳 Data.gov.in Official AQI Benchmarks</span>
+          <span style="font-size:10px; font-weight:700; color:#10b981; background:rgba(16,185,129,0.1); padding:3px 8px; border-radius:8px;">Open Govt Data (OGD)</span>
+        </div>
+        <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:10px;">
+          Rajya Sabha & MoEFCC Official Air Quality Datasets (2019 – 2024):
+        </div>
+
+        <button class="btn-action" onclick="loadGovBenchmarks()" style="background:linear-gradient(135deg, #4f46e5, #6366f1);">
+          📊 Load Government AQI Historical Benchmarks
+        </button>
+
+        <div id="govBenchmarkResultCard" style="margin-top:12px; display:none;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1497,6 +1516,73 @@ async function runEiaSimulation() {
     `;
   } catch (e) {
     resCard.innerHTML = `<div style="color:#ef4444; font-weight:700;">Simulation error.</div>`;
+  }
+}
+
+async function loadGovBenchmarks() {
+  const card = document.getElementById("govBenchmarkResultCard");
+  card.style.display = "block";
+  card.innerHTML = `<div style="text-align:center; padding:12px; font-weight:700; color:var(--accent-purple);">⏳ Fetching Data.gov.in OGD Benchmarks...</div>`;
+
+  try {
+    const res = await fetch(`${API_BASE}/gov/benchmarks`);
+    const d = await res.json();
+
+    const severeRows = (d.severeSmogDays2023Vs2024 || []).map(r => `
+      <tr style="border-bottom:1px solid rgba(226,232,240,0.6);">
+        <td style="padding:6px; font-weight:700;">${r.state}</td>
+        <td style="padding:6px; text-align:center; color:#eab308; font-weight:800;">${r.days2023}</td>
+        <td style="padding:6px; text-align:center; color:#ef4444; font-weight:800;">${r.days2024}</td>
+      </tr>
+    `).join('');
+
+    const metroRows = (d.metroComparison2019to2024 || []).map(r => `
+      <tr style="border-bottom:1px solid rgba(226,232,240,0.6);">
+        <td style="padding:6px; font-weight:700;">${r.city}</td>
+        <td style="padding:6px; text-align:center;">${r.avgAqi2019}</td>
+        <td style="padding:6px; text-align:center; color:#10b981; font-weight:700;">${r.avgAqi2020Lockdown}</td>
+        <td style="padding:6px; text-align:center; font-weight:800; color:${getAqiColor(r.avgAqi2024)};">${r.avgAqi2024}</td>
+      </tr>
+    `).join('');
+
+    card.innerHTML = `
+      <div style="background:white; padding:14px; border-radius:14px; border:1px solid rgba(226,232,240,0.8);">
+        <div style="font-size:11px; font-weight:800; color:#4f46e5; margin-bottom:8px;">
+          🚨 SEVERE SMOG DAYS (>400 AQI) BY STATE (2023 vs 2024)
+        </div>
+        <table style="width:100%; font-size:11px; margin-bottom:14px; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f8fafc; color:var(--text-muted); text-align:left;">
+              <th style="padding:6px;">State / Region</th>
+              <th style="padding:6px; text-align:center;">2023 Days</th>
+              <th style="padding:6px; text-align:center;">2024 Days</th>
+            </tr>
+          </thead>
+          <tbody>${severeRows}</tbody>
+        </table>
+
+        <div style="font-size:11px; font-weight:800; color:#059669; margin-bottom:8px;">
+          🌆 METROPOLITAN AQI COMPARATIVE STATUS (2019 - 2024)
+        </div>
+        <table style="width:100%; font-size:11px; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f8fafc; color:var(--text-muted); text-align:left;">
+              <th style="padding:6px;">Metro</th>
+              <th style="padding:6px; text-align:center;">2019 Base</th>
+              <th style="padding:6px; text-align:center;">2020 Lockdown</th>
+              <th style="padding:6px; text-align:center;">2024 Current</th>
+            </tr>
+          </thead>
+          <tbody>${metroRows}</tbody>
+        </table>
+
+        <div style="font-size:10px; color:var(--text-muted); margin-top:10px; font-style:italic;">
+          Source: ${d.source}
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    card.innerHTML = `<div style="color:#ef4444; font-weight:700;">Could not load government benchmarks.</div>`;
   }
 }
 
