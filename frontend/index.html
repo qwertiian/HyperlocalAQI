@@ -501,13 +501,98 @@
     width: 100%;
   }
 
-  /* Custom Leaflet Map Controls */
-  .leaflet-popup-content-wrapper {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    color: #0f172a;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  /* Responsive Mobile & Tablet Layout System */
+  @media (max-width: 1024px) {
+    body {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    header {
+      padding: 12px 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand h1 {
+      font-size: 17px;
+    }
+    .brand p {
+      font-size: 10.5px;
+    }
+    .status-badge {
+      display: none;
+    }
+    .main-layout {
+      flex-direction: column;
+      height: auto;
+      padding: 12px;
+      gap: 16px;
+    }
+    .map-wrapper {
+      width: 100%;
+      height: 400px;
+      min-height: 350px;
+      border-radius: 18px;
+    }
+    .sidebar-panel {
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      overflow-y: visible;
+      padding: 14px;
+      gap: 14px;
+    }
+    .click-banner {
+      width: 90%;
+      text-align: center;
+      font-size: 11px;
+      padding: 8px 12px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    header {
+      padding: 10px 14px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+    }
+    .brand-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+    .brand h1 {
+      font-size: 15px;
+    }
+    .nav-pills {
+      width: 100%;
+      overflow-x: auto;
+      justify-content: flex-start;
+    }
+    .nav-pill-btn {
+      padding: 6px 12px;
+      font-size: 11.5px;
+    }
+    .ticker-bar {
+      padding: 8px 12px;
+    }
+    .map-wrapper {
+      height: 320px;
+    }
+    .map-overlay-card {
+      top: 10px;
+      left: 10px;
+      padding: 6px 12px;
+    }
+    .map-overlay-card input {
+      width: 130px;
+      font-size: 12px;
+    }
+    .tab-btn {
+      font-size: 11px;
+      padding: 8px 4px;
+    }
   }
 </style>
 </head>
@@ -898,6 +983,13 @@ function updateActiveLocation(data) {
   }
 
   document.getElementById("aqiInput").value = data.aqi;
+
+  if (data.hourlySeries && data.hourlySeries.length) {
+    updateChartWithRealData(data.hourlySeries, data.aqi);
+  } else {
+    updateChartWithRealData(null, data.aqi);
+  }
+
   // Auto-switch to forecast tab to show analytics
   document.querySelectorAll('.tab-btn')[0].click();
 }
@@ -1133,6 +1225,42 @@ function initChart() {
       }
     }
   });
+}
+
+function updateChartWithRealData(hourlySeries, currentAqi) {
+  if (!forecastChart) return;
+  if (hourlySeries && hourlySeries.length) {
+    const labels = hourlySeries.map(d => d.time);
+    const historical = hourlySeries.map((d, i) => i < 12 ? d.aqi : null);
+    const forecast = hourlySeries.map((d, i) => i >= 11 ? d.aqi : null);
+
+    forecastChart.data.labels = labels;
+    forecastChart.data.datasets[0].data = historical;
+    forecastChart.data.datasets[1].data = forecast;
+    forecastChart.update();
+  } else if (currentAqi) {
+    const labels = [];
+    const historical = [];
+    const forecast = [];
+    const nowH = new Date().getHours();
+    for (let i = -12; i <= 12; i += 2) {
+      const h = (nowH + i + 24) % 24;
+      labels.push(`${h.toString().padStart(2, '0')}:00`);
+      const factor = 1.0 + 0.22 * Math.sin(((h - 6) * Math.PI) / 12);
+      const val = Math.max(15, Math.round(currentAqi * factor));
+      if (i <= 0) {
+        historical.push(val);
+        forecast.push(null);
+      } else {
+        historical.push(null);
+        forecast.push(val);
+      }
+    }
+    forecastChart.data.labels = labels;
+    forecastChart.data.datasets[0].data = historical;
+    forecastChart.data.datasets[1].data = forecast;
+    forecastChart.update();
+  }
 }
 
 async function loadForecastChart(stationId) {

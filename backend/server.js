@@ -63,9 +63,49 @@ function fetchOpenMeteo(lat, lon) {
   });
 }
 
+// Official CPCB Indian AQI Breakpoint Algorithm
+function calculateIndianAqi(pm25, pm10, no2, so2) {
+  function subPM25(val) {
+    if (val <= 30) return (val / 30) * 50;
+    if (val <= 60) return 50 + ((val - 30) / 30) * 50;
+    if (val <= 90) return 100 + ((val - 60) / 30) * 100;
+    if (val <= 120) return 200 + ((val - 90) / 30) * 100;
+    if (val <= 250) return 300 + ((val - 120) / 130) * 100;
+    return 400 + (val - 250);
+  }
+  function subPM10(val) {
+    if (val <= 50) return val;
+    if (val <= 100) return val;
+    if (val <= 250) return 100 + ((val - 100) / 150) * 100;
+    if (val <= 350) return 200 + ((val - 250) / 100) * 100;
+    if (val <= 430) return 300 + ((val - 350) / 80) * 100;
+    return 400 + (val - 430);
+  }
+  function subNO2(val) {
+    if (val <= 40) return (val / 40) * 50;
+    if (val <= 80) return 50 + ((val - 40) / 40) * 50;
+    if (val <= 180) return 100 + ((val - 80) / 100) * 100;
+    if (val <= 280) return 200 + ((val - 180) / 100) * 100;
+    if (val <= 400) return 300 + ((val - 280) / 120) * 100;
+    return 400;
+  }
+  function subSO2(val) {
+    if (val <= 40) return (val / 40) * 50;
+    if (val <= 80) return 50 + ((val - 40) / 40) * 50;
+    if (val <= 380) return 100 + ((val - 80) / 300) * 100;
+    return 200;
+  }
+
+  const s25 = subPM25(pm25 || 0);
+  const s10 = subPM10(pm10 || 0);
+  const sN2 = subNO2(no2 || 0);
+  const sS2 = subSO2(so2 || 0);
+  return Math.max(1, Math.round(Math.max(s25, s10, sN2, sS2)));
+}
+
 function fetchLiveOpenMeteoAqi(lat, lon) {
   return new Promise((resolve) => {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&timezone=Asia/Kolkata`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,nitrogen_dioxide&past_days=1&forecast_days=1&timezone=Asia/Kolkata`;
     https.get(url, (res) => {
       let body = "";
       res.on("data", (chunk) => (body += chunk));
@@ -77,17 +117,29 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
           const pm10 = cur.pm10 != null ? cur.pm10 : 35.0;
           const no2 = cur.nitrogen_dioxide != null ? cur.nitrogen_dioxide : 10.0;
           const so2 = cur.sulphur_dioxide != null ? cur.sulphur_dioxide : 5.0;
-          
-          let calculatedAqi = Math.round(pm25 * 2.0);
-          if (cur.us_aqi) calculatedAqi = Math.min(calculatedAqi, cur.us_aqi);
-          calculatedAqi = Math.max(calculatedAqi, 20);
+
+          const indianAqi = calculateIndianAqi(pm25, pm10, no2, so2);
+
+          // Build hourly 24h series capturing 3 AM drop & 9 AM rush hour peak
+          const hTimes = (data.hourly || {}).time || [];
+          const hPm25 = (data.hourly || {}).pm2_5 || [];
+          const hourlySeries = hTimes.slice(-24).map((t, idx) => {
+            const pVal = hPm25[hTimes.length - 24 + idx] || pm25;
+            const hourLabel = t.split("T")[1] ? t.split("T")[1].substring(0, 5) : t;
+            return {
+              time: hourLabel,
+              pm25: Number(pVal.toFixed(1)),
+              aqi: calculateIndianAqi(pVal, pVal * 1.8, 15, 5),
+            };
+          });
 
           resolve({
-            liveAqi: calculatedAqi,
+            liveAqi: indianAqi,
             pm25: Number(pm25.toFixed(1)),
             pm10: Number(pm10.toFixed(1)),
             no2: Number(no2.toFixed(1)),
             so2: Number(so2.toFixed(1)),
+            hourlySeries: hourlySeries,
           });
         } catch (e) { resolve(null); }
       });
@@ -336,6 +388,7 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     color: catInfo.color,
     description: catInfo.desc,
     pollutants: { pm25, pm10, no2, so2 },
+    hourlySeries: liveAir && liveAir.hourlySeries ? liveAir.hourlySeries : [],
     source: liveAir ? "Open-Meteo Live Satellite & CAAQM Stream" : "Spatial IDW Station Interpolation",
     nearestStation: {
       id: nearestStation ? nearestStation.station_id : "N/A",
