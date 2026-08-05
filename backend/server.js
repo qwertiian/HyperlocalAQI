@@ -68,7 +68,7 @@ function fetchOpenMeteo(lat, lon) {
         "weather_code",
       ].join(","),
       hourly: "boundary_layer_height",
-      forecast_days: 3,
+      forecast_days: 1,
       timezone: "Asia/Kolkata",
     });
     const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
@@ -80,6 +80,22 @@ function fetchOpenMeteo(lat, lon) {
           const json = JSON.parse(data);
           const cur = json.current || {};
           const blhArr = (json.hourly || {}).boundary_layer_height || [];
+          const blhTimes = (json.hourly || {}).time || [];
+
+          // BUG FIX: Use current IST hour's BLH, not index 0 (midnight)
+          // blhArr[0] was always the midnight/00:00 value (~70m), causing false severe inversion during day
+          const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: false });
+          const currentHour = parseInt(nowIST, 10);
+          let blhCurrentHour = null;
+          if (blhArr.length > 0) {
+            // Find the index whose time matches current IST hour
+            const matchIdx = blhTimes.findIndex(t => {
+              const h = parseInt((t.split("T")[1] || "00").substring(0, 2), 10);
+              return h === currentHour;
+            });
+            blhCurrentHour = matchIdx >= 0 ? blhArr[matchIdx] : blhArr[Math.min(currentHour, blhArr.length - 1)];
+          }
+
           resolve({
             temperature_c: cur.temperature_2m,
             humidity_pct: cur.relative_humidity_2m,
@@ -88,13 +104,14 @@ function fetchOpenMeteo(lat, lon) {
             pressure_hpa: cur.surface_pressure,
             uv_index: cur.uv_index,
             weather_code: cur.weather_code,
-            boundary_layer_height_m: blhArr[0] || null,
+            boundary_layer_height_m: blhCurrentHour,
           });
         } catch (e) { reject(e); }
       });
     }).on("error", reject);
   });
 }
+
 
 // Official CPCB Indian AQI Breakpoint Algorithm
 function calculateIndianAqi(pm25, pm10, no2, so2) {
@@ -491,30 +508,30 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   }
 
   // ━━━ Atmospheric Physics Layer 1: Planetary Boundary Layer (BLH) Inversion Scaling ━━━
-  // When BLH < 300m (early morning/winter nights), pollutants are trapped near surface → AQI spikes
-  // Source: Open-Meteo boundary_layer_height (free, no API key)
+  // Now uses current IST hour's BLH value (not midnight index 0 — that was the bug)
+  // Typical Indian urban BLH: 800-2000m at noon, 100-400m at midnight/winter morning
   let weather = null;
   try { weather = await fetchOpenMeteo(lat, lon); } catch(e) {}
   if (weather && weather.boundary_layer_height_m != null) {
     const blh = weather.boundary_layer_height_m;
-    const blhMultiplier = blh < 200 ? 1.40 : blh < 300 ? 1.28 : blh < 500 ? 1.12 : blh < 800 ? 1.05 : 1.0;
+    // Conservative multipliers — only meaningful for BLH < 400m (genuine inversions)
+    const blhMultiplier = blh < 150 ? 1.20 : blh < 300 ? 1.12 : blh < 500 ? 1.06 : 1.0;
     finalAqi = Math.round(finalAqi * blhMultiplier);
   }
 
   // ━━━ Atmospheric Physics Layer 2: Wind Stagnation Index ━━━
-  // Low wind speed (<1.5 m/s) means pollutants stagnate locally; high NW winds disperse IGP smoke
+  // Conservative — only apply at very low wind (<1 m/s stagnation)
   if (weather && weather.wind_speed_ms != null) {
     const ws = weather.wind_speed_ms;
-    const windMultiplier = ws < 0.5 ? 1.18 : ws < 1.5 ? 1.09 : ws > 5.0 ? 0.90 : 1.0;
+    const windMultiplier = ws < 0.5 ? 1.10 : ws < 1.0 ? 1.05 : ws > 6.0 ? 0.93 : 1.0;
     finalAqi = Math.round(finalAqi * windMultiplier);
   }
 
   // ━━━ Diurnal Rush-Hour Traffic Emission Factor ━━━
-  // Peak vehicular NO2/PM10 surges: 8–10:30am and 6–9pm IST
   const istHour = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: false });
   const h = parseInt(istHour, 10);
   const rushHour = (h >= 8 && h <= 10) || (h >= 18 && h <= 21);
-  if (rushHour) finalAqi = Math.round(finalAqi * 1.12);
+  if (rushHour) finalAqi = Math.round(finalAqi * 1.08);
 
   // Scale individual pollutant concentrations proportionally to final interpolated AQI
   if (liveAir) {

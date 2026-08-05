@@ -1184,57 +1184,73 @@ async function loadSpatialGrid() {
     const res = await fetch(`${API_BASE}/aqi/grid`);
     const data = await res.json();
 
-    // Draw soft IDW halo cells (radius scales with zoom level)
+    // Draw soft IDW halo cells
     if (data.grid && data.grid.length) {
       data.grid.forEach(cell => {
         L.circle([cell.lat, cell.lon], {
-          radius: 30000,  // ~30 km halos
+          radius: 30000,
           color: getAqiColor(cell.aqi),
           fillColor: getAqiColor(cell.aqi),
-          fillOpacity: 0.12,
+          fillOpacity: 0.10,
           stroke: false,
         }).addTo(map);
       });
     }
 
-    // Station markers with rich popup
+    // Station markers — fetch live WAQI AQI per station to avoid all showing same static value
     if (data.stations && data.stations.length) {
-      // Update status badge with station count
       document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Stations • Postgres • Nationwide`;
 
       data.stations.forEach(s => {
-        const color = getAqiColor(s.value);
-        L.circleMarker([s.lat, s.lon], {
+        // Start with static dataset value, then enrich async with live interpolated AQI
+        const initColor = getAqiColor(s.value);
+        const marker = L.circleMarker([s.lat, s.lon], {
           radius: 6,
           color: "#ffffff",
           weight: 1.5,
-          fillColor: color,
+          fillColor: initColor,
           fillOpacity: 1,
         }).addTo(map)
           .bindPopup(`
             <div style="padding:4px; min-width:160px;">
               <div style="font-size:13px; font-weight:700; color:#0f172a; line-height:1.3;">${s.name || s.station_id}</div>
               <div style="font-size:11px; color:#64748b; margin-top:2px;">📍 ${s.city || 'India'}</div>
-              <div style="font-size:22px; font-weight:800; color:${color}; margin-top:6px;">${s.value} <span style="font-size:12px; font-weight:600;">AQI</span></div>
-              <div style="font-size:11px; font-weight:700; color:${color}; margin-top:2px;">${getCategory(s.value)}</div>
+              <div style="font-size:22px; font-weight:800; color:${initColor}; margin-top:6px;" id="marker-aqi-${s.station_id}">${s.value} <span style="font-size:12px; font-weight:600;">AQI</span></div>
+              <div style="font-size:11px; font-weight:700; color:${initColor}; margin-top:2px;" id="marker-cat-${s.station_id}">${getCategory(s.value)}</div>
+              <div style="font-size:10px; color:#94a3b8; margin-top:4px;" id="marker-src-${s.station_id}">📡 Loading live feed...</div>
             </div>
           `)
           .on("click", async (e) => {
             if (e && e.originalEvent) L.DomEvent.stopPropagation(e);
-            if (clickPinMarker) {
-              map.removeLayer(clickPinMarker);
-              clickPinMarker = null;
-            }
+            if (clickPinMarker) { map.removeLayer(clickPinMarker); clickPinMarker = null; }
             try {
-              const res = await fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`);
-              const data = await res.json();
-              updateActiveLocation(data);
+              const liveRes = await fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`);
+              const liveData = await liveRes.json();
+              updateActiveLocation(liveData);
               loadWeather(s.lat, s.lon, `${s.name || s.city}, ${s.city}`);
               loadForecastChart(s.station_id);
             } catch(err) {
-              updateActiveLocation({ aqi: s.value, category: getCategory(s.value), color: color, nearestStation: { name: s.name, city: s.city, distanceKm: 0 } });
+              updateActiveLocation({ aqi: s.value, category: getCategory(s.value), color: initColor, nearestStation: { name: s.name, city: s.city, distanceKm: 0 } });
             }
           });
+
+        // Async enrich each station marker with its own live WAQI feed
+        fetch(`${API_BASE}/aqi/interpolate?lat=${s.lat}&lon=${s.lon}`)
+          .then(r => r.json())
+          .then(live => {
+            if (live && live.aqi != null) {
+              const liveColor = getAqiColor(live.aqi);
+              marker.setStyle({ fillColor: liveColor });
+              // Update popup content if open
+              const el = document.getElementById(`marker-aqi-${s.station_id}`);
+              const catEl = document.getElementById(`marker-cat-${s.station_id}`);
+              const srcEl = document.getElementById(`marker-src-${s.station_id}`);
+              if (el) { el.textContent = `${live.aqi} AQI`; el.style.color = liveColor; }
+              if (catEl) { catEl.textContent = live.category; catEl.style.color = liveColor; }
+              if (srcEl) srcEl.textContent = `📡 ${live.source || 'Live Fusion Feed'}`;
+            }
+          })
+          .catch(() => {});
       });
     }
   } catch (e) {
