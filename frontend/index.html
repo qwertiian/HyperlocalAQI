@@ -253,7 +253,10 @@
   #map {
     width: 100%;
     height: 100%;
-    background: #f8fafc;
+    min-height: 320px;
+    flex: 1;
+    background: #e2e8f0;
+    z-index: 1;
   }
 
   /* Floating Map Search & Click Tracker Banner */
@@ -911,6 +914,15 @@ function initMap() {
     attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
     maxZoom: 18,
   }).addTo(map);
+
+  // Invalidate Leaflet canvas size on load, window resize, and layout changes for 100% mobile compatibility
+  setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+  setTimeout(() => { if (map) map.invalidateSize(); }, 800);
+
+  window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+  });
 
   // Click-Anywhere-on-Map Nationwide Tracking
   map.on("click", async (e) => {
