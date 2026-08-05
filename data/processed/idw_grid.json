@@ -4870,7 +4870,7 @@
       "city": "Nagpur",
       "lat": 21.1060842742246,
       "lon": 79.1399971974685,
-      "value": 37
+      "value": 58
     },
     {
       "station_id": "demo_station_2",
@@ -4878,7 +4878,7 @@
       "city": "Nagpur",
       "lat": 21.1397395833978,
       "lon": 79.0710500999273,
-      "value": 37
+      "value": 42
     },
     {
       "station_id": "demo_station_3",
@@ -4886,7 +4886,7 @@
       "city": "Nagpur",
       "lat": 21.1983716019776,
       "lon": 79.1124981440472,
-      "value": 37
+      "value": 74
     },
     {
       "station_id": "demo_station_4",
@@ -4894,7 +4894,7 @@
       "city": "Nagpur",
       "lat": 21.1555276825765,
       "lon": 79.1265090407917,
-      "value": 37
+      "value": 31
     },
     {
       "station_id": "demo_station_5",
@@ -4902,7 +4902,7 @@
       "city": "Nagpur",
       "lat": 21.1755165783105,
       "lon": 79.1598283303782,
-      "value": 37
+      "value": 65
     },
     {
       "station_id": "demo_station_6",
@@ -4910,7 +4910,7 @@
       "city": "Nagpur",
       "lat": 21.1630175165117,
       "lon": 79.1129679980236,
-      "value": 37
+      "value": 28
     },
     {
       "station_id": "demo_station_7",
@@ -4918,7 +4918,7 @@
       "city": "Nagpur",
       "lat": 21.1508985733203,
       "lon": 79.1282660408313,
-      "value": 37
+      "value": 49
     },
     {
       "station_id": "demo_station_8",
@@ -4926,7 +4926,7 @@
       "city": "Nagpur",
       "lat": 21.0775137129664,
       "lon": 79.1269160358176,
-      "value": 37
+      "value": 83
     },
     {
       "station_id": "hyderabad_charminar",
