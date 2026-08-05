@@ -665,17 +665,17 @@
       <div class="glass-card" style="border-color: rgba(139, 92, 246, 0.4);">
         <div class="card-title">
           <span>Active Location AQI</span>
-          <span id="activeCityTag" style="color:var(--accent-purple); font-weight:800; font-size:13px;">Nagpur</span>
+          <span id="activeCityTag" style="color:var(--accent-purple); font-weight:800; font-size:13px;">Nagpur Base</span>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
           <div>
-            <div style="font-size:32px; font-weight:800;" id="activeAqiVal">208</div>
-            <div style="font-size:12px; font-weight:700; color:#f97316;" id="activeCategory">Poor Air Quality</div>
+            <div style="font-size:32px; font-weight:800;" id="activeAqiVal">—</div>
+            <div style="font-size:12px; font-weight:700; color:var(--text-muted);" id="activeCategory">Loading Live Data...</div>
           </div>
           <div style="text-align:right; font-size:12px; color:var(--text-secondary);">
             <div>Nearest Station:</div>
-            <div style="font-weight:700;" id="nearestStationName">Civil Lines</div>
-            <div style="color:var(--text-muted); font-size:11px;" id="nearestStationDist">0.4 km away</div>
+            <div style="font-weight:700;" id="nearestStationName">Fetching nearest...</div>
+            <div style="color:var(--text-muted); font-size:11px;" id="nearestStationDist">— km away</div>
           </div>
         </div>
       </div>
@@ -696,19 +696,19 @@
         <div class="pollutant-grid">
           <div class="pollutant-box">
             <div class="pollutant-name">PM 2.5</div>
-            <div class="pollutant-val" id="pm25Val">93.6 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+            <div class="pollutant-val" id="pm25Val">— <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
           </div>
           <div class="pollutant-box">
             <div class="pollutant-name">PM 10</div>
-            <div class="pollutant-val" id="pm10Val">156.0 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+            <div class="pollutant-val" id="pm10Val">— <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
           </div>
           <div class="pollutant-box">
             <div class="pollutant-name">NO2</div>
-            <div class="pollutant-val" id="no2Val">42.1 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+            <div class="pollutant-val" id="no2Val">— <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
           </div>
           <div class="pollutant-box">
             <div class="pollutant-name">SO2</div>
-            <div class="pollutant-val" id="so2Val">14.5 <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
+            <div class="pollutant-val" id="so2Val">— <span style="font-size:11px; font-weight:500; color:var(--text-muted);">µg/m³</span></div>
           </div>
         </div>
       </div>
@@ -1500,13 +1500,26 @@ async function runEiaSimulation() {
   }
 }
 
+async function loadInitialLiveLocation() {
+  try {
+    const res = await fetch(`${API_BASE}/aqi/interpolate?lat=21.1458&lon=79.0882`);
+    const data = await res.json();
+    if (data && data.aqi != null) {
+      updateActiveLocation(data);
+    }
+  } catch(e) {
+    console.warn("Initial live location fetch error", e);
+  }
+}
+
 window.onload = () => {
   initMap();
   loadCitiesDirectory();
   loadMetrosTicker();
   loadSpatialGrid();
   initChart();
-  loadWeather(21.1458, 79.0882, 'Nagpur');
+  loadWeather(21.1458, 79.0882, 'Nagpur Base');
+  loadInitialLiveLocation();
 };
 </script>
 </body>
