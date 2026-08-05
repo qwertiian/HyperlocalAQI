@@ -647,6 +647,9 @@
     <div class="click-banner">
       <span>📍 Click ANY spot on the map in India for real-time spatial AQI interpolation</span>
     </div>
+    <button class="map-overlay-btn" id="btnToggleFirms" onclick="toggleNasaFirmsFires()" style="position:absolute; bottom:14px; right:14px; z-index:1000; background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(249,115,22,0.5); padding:8px 14px; border-radius:20px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(8px); display:flex; align-items:center; gap:6px;">
+      🔥 NASA Thermal Satellite Stubble Fires (VIIRS)
+    </button>
     <div id="map"></div>
   </div>
 
@@ -1629,6 +1632,58 @@ async function loadGovBenchmarks() {
     `;
   } catch (e) {
     card.innerHTML = `<div style="color:#ef4444; font-weight:700;">Could not load government benchmarks.</div>`;
+  }
+}
+
+let nasaFireLayerGroup = null;
+let nasaFirmsActive = false;
+
+async function toggleNasaFirmsFires() {
+  const btn = document.getElementById("btnToggleFirms");
+  if (nasaFirmsActive) {
+    if (nasaFireLayerGroup && map) map.removeLayer(nasaFireLayerGroup);
+    nasaFirmsActive = false;
+    btn.style.background = "rgba(15,23,42,0.85)";
+    btn.innerHTML = "🔥 NASA Thermal Satellite Stubble Fires (VIIRS)";
+    return;
+  }
+
+  btn.innerHTML = "⏳ Ingesting NASA VIIRS Satellite Data...";
+  try {
+    const res = await fetch(`${API_BASE}/spatial/stubble-fires`);
+    const data = await res.json();
+    const fires = data.fires || [];
+
+    if (nasaFireLayerGroup && map) map.removeLayer(nasaFireLayerGroup);
+    nasaFireLayerGroup = L.layerGroup();
+
+    fires.forEach(f => {
+      const circle = L.circleMarker([f.lat, f.lon], {
+        radius: 5,
+        fillColor: "#ef4444",
+        color: "#f97316",
+        weight: 1,
+        opacity: 0.9,
+        fillOpacity: 0.75
+      }).bindPopup(`
+        <div style="font-size:11px; font-weight:700; color:#c2410c;">
+          🔥 NASA Active Thermal Stubble Fire
+        </div>
+        <div style="font-size:11px; color:#475569; margin-top:2px;">
+          Date: ${f.acqDate}<br/>
+          Fire Power: ${f.frp} MW (VIIRS)
+        </div>
+      `);
+      nasaFireLayerGroup.addLayer(circle);
+    });
+
+    nasaFireLayerGroup.addTo(map);
+    nasaFirmsActive = true;
+    btn.style.background = "linear-gradient(135deg, #c2410c, #ea580c)";
+    btn.innerHTML = `🔥 Active NASA Stubble Fires (${fires.length} Hotspots)`;
+  } catch (e) {
+    btn.innerHTML = "⚠️ Could not load NASA satellite data";
+    setTimeout(() => { btn.innerHTML = "🔥 NASA Thermal Satellite Stubble Fires (VIIRS)"; }, 3000);
   }
 }
 

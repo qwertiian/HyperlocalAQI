@@ -187,6 +187,76 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
   });
 }
 
+// WAQI / AQICN Live Station Feed API Integration
+function fetchWaqiStationFeed(lat, lon) {
+  const token = process.env.WAQI_API_TOKEN || "5df8683aab10dfce4763961bdd79ff3ff6a7ecee";
+  return new Promise((resolve) => {
+    const url = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${token}`;
+    https.get(url, (res) => {
+      let body = "";
+      res.on("data", (c) => (body += c));
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(body);
+          if (json.status === "ok" && json.data) {
+            const d = json.data;
+            const iaqi = d.iaqi || {};
+            resolve({
+              stationName: d.city ? d.city.name : "CPCB Ground Sensor",
+              stationAqi: d.aqi,
+              geo: d.city && d.city.geo ? d.city.geo : [lat, lon],
+              pm25: iaqi.pm25 ? iaqi.pm25.v : null,
+              pm10: iaqi.pm10 ? iaqi.pm10.v : null,
+              no2: iaqi.no2 ? iaqi.no2.v : null,
+              so2: iaqi.so2 ? iaqi.so2.v : null,
+              attributions: d.attributions || []
+            });
+          } else { resolve(null); }
+        } catch (e) { resolve(null); }
+      });
+    }).on("error", () => resolve(null));
+  });
+}
+
+// NASA FIRMS VIIRS Satellite Thermal Active Stubble Burning & Wildfire Hotspots API
+app.get("/api/spatial/stubble-fires", (req, res) => {
+  const mapKey = process.env.NASA_FIRMS_MAP_KEY || "c626d1738d6ef53fe7185d8e98d7bd00";
+  const url = `https://firms.modaps.eosdis.nasa.gov/api/country/csv/${mapKey}/VIIRS_SNPP_NRT/IND/1`;
+
+  https.get(url, (apiRes) => {
+    let csvData = "";
+    apiRes.on("data", (c) => (csvData += c));
+    apiRes.on("end", () => {
+      try {
+        const lines = csvData.trim().split("\n");
+        if (lines.length < 2) return res.json({ source: "NASA FIRMS", count: 0, fires: [] });
+
+        const fires = lines.slice(1, 250).map(line => {
+          const parts = line.split(",");
+          return {
+            lat: parseFloat(parts[0]),
+            lon: parseFloat(parts[1]),
+            brightness: parseFloat(parts[2]),
+            acqDate: parts[5],
+            confidence: parts[8] || "nominal",
+            frp: parseFloat(parts[12]) || 0
+          };
+        }).filter(f => !isNaN(f.lat) && !isNaN(f.lon));
+
+        res.json({
+          source: "NASA FIRMS (VIIRS Thermal Satellite Data)",
+          count: fires.length,
+          fires: fires
+        });
+      } catch (e) {
+        res.status(500).json({ error: "NASA FIRMS parsing failed" });
+      }
+    });
+  }).on("error", (err) => {
+    res.status(500).json({ error: err.message });
+  });
+});
+
 function readJSON(filename, fallback) {
   const p = path.join(DATA_DIR, filename);
   if (!fs.existsSync(p)) return fallback;
@@ -377,20 +447,24 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     });
   }
 
-  // Try live satellite/station Open-Meteo feed for exact coordinates
-  const liveAir = await fetchLiveOpenMeteoAqi(lat, lon);
+  // Parallel fetch live Open-Meteo satellite feed and WAQI real-time CPCB station feed
+  const [liveAir, waqiData] = await Promise.all([
+    fetchLiveOpenMeteoAqi(lat, lon),
+    fetchWaqiStationFeed(lat, lon)
+  ]);
+
   const satelliteAqi = liveAir ? liveAir.liveAqi : null;
-  const stationAqi = (nearestStation && nearestStation.value) ? nearestStation.value : null;
+  const waqiAqi = (waqiData && waqiData.stationAqi != null && !isNaN(waqiData.stationAqi)) ? Number(waqiData.stationAqi) : null;
 
-  let finalAqi;
-  let pm25, pm10, no2, so2;
-
-  // Spatial Multi-Station IDW Surface Engine (Top 5 nearby CPCB ground stations)
+  // Spatial Multi-Station IDW Surface Engine (Top 5 nearby CPCB ground stations + WAQI Real-time CPCB)
   const nearbyGroundStations = stationsWithDist.filter(s => s.dist <= 100 && s.value != null);
   const topStations = nearbyGroundStations.slice(0, 5);
 
   let groundIdwAqi = 0;
-  if (topStations.length > 0) {
+  if (waqiAqi != null && waqiAqi > 0) {
+    // If WAQI direct CPCB feed is available for exact location, give heavy ground truth weight
+    groundIdwAqi = waqiAqi;
+  } else if (topStations.length > 0) {
     let sumWeight = 0;
     let sumWeightedAqi = 0;
     topStations.forEach(st => {
@@ -406,7 +480,6 @@ app.get("/api/aqi/interpolate", async (req, res) => {
 
   // Smooth Regional Blending between Multi-Station Ground IDW and Satellite Grid
   if (groundIdwAqi > 0 && satelliteAqi != null) {
-    // Ground station network governs urban corridors (90% weight at station, decaying smoothly to 40% at 30km)
     const alpha = Math.max(0.35, 0.90 * Math.exp(-minDistance / 18.0));
     finalAqi = Math.round(alpha * groundIdwAqi + (1.0 - alpha) * satelliteAqi);
   } else if (groundIdwAqi > 0) {
@@ -416,6 +489,32 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   } else {
     finalAqi = 50;
   }
+
+  // ━━━ Atmospheric Physics Layer 1: Planetary Boundary Layer (BLH) Inversion Scaling ━━━
+  // When BLH < 300m (early morning/winter nights), pollutants are trapped near surface → AQI spikes
+  // Source: Open-Meteo boundary_layer_height (free, no API key)
+  let weather = null;
+  try { weather = await fetchOpenMeteo(lat, lon); } catch(e) {}
+  if (weather && weather.boundary_layer_height_m != null) {
+    const blh = weather.boundary_layer_height_m;
+    const blhMultiplier = blh < 200 ? 1.40 : blh < 300 ? 1.28 : blh < 500 ? 1.12 : blh < 800 ? 1.05 : 1.0;
+    finalAqi = Math.round(finalAqi * blhMultiplier);
+  }
+
+  // ━━━ Atmospheric Physics Layer 2: Wind Stagnation Index ━━━
+  // Low wind speed (<1.5 m/s) means pollutants stagnate locally; high NW winds disperse IGP smoke
+  if (weather && weather.wind_speed_ms != null) {
+    const ws = weather.wind_speed_ms;
+    const windMultiplier = ws < 0.5 ? 1.18 : ws < 1.5 ? 1.09 : ws > 5.0 ? 0.90 : 1.0;
+    finalAqi = Math.round(finalAqi * windMultiplier);
+  }
+
+  // ━━━ Diurnal Rush-Hour Traffic Emission Factor ━━━
+  // Peak vehicular NO2/PM10 surges: 8–10:30am and 6–9pm IST
+  const istHour = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: false });
+  const h = parseInt(istHour, 10);
+  const rushHour = (h >= 8 && h <= 10) || (h >= 18 && h <= 21);
+  if (rushHour) finalAqi = Math.round(finalAqi * 1.12);
 
   // Scale individual pollutant concentrations proportionally to final interpolated AQI
   if (liveAir) {
@@ -432,6 +531,12 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   }
 
   const catInfo = getCategory(finalAqi);
+  const physicsApplied = [
+    weather && weather.boundary_layer_height_m != null ? `BLH ${weather.boundary_layer_height_m}m` : null,
+    weather && weather.wind_speed_ms != null ? `Wind ${weather.wind_speed_ms}m/s` : null,
+    rushHour ? "Rush-Hour Factor" : null,
+    waqiAqi != null ? `WAQI Station ${waqiData.stationName}` : null,
+  ].filter(Boolean);
 
   res.json({
     lat,
@@ -442,13 +547,51 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     description: catInfo.desc,
     pollutants: { pm25, pm10, no2, so2 },
     hourlySeries: liveAir && liveAir.hourlySeries ? liveAir.hourlySeries : [],
-    source: liveAir ? "Open-Meteo Live Satellite & CAAQM Stream" : "Spatial IDW Station Interpolation",
+    source: waqiAqi != null
+      ? `WAQI CPCB Live (${waqiData.stationName}) + Open-Meteo + BLH Physics`
+      : (liveAir ? "Open-Meteo Live Satellite + BLH Physics" : "Spatial IDW Station Interpolation"),
+    atmosphericPhysicsApplied: physicsApplied,
     nearestStation: {
       id: nearestStation ? nearestStation.station_id : "N/A",
       name: nearestStation ? (nearestStation.name || nearestStation.station_id) : "N/A",
       city: nearestStation ? (nearestStation.city || "India") : "India",
       distanceKm: Number(minDistance.toFixed(1)),
     },
+  });
+});
+
+// OpenAQ-style endpoint: nearby real-time CPCB monitoring stations for a coordinate
+app.get("/api/aqi/realtime-stations", async (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lon = parseFloat(req.query.lon);
+  const radius = parseFloat(req.query.radius) || 50;
+  if (isNaN(lat) || isNaN(lon)) return res.status(400).json({ error: "lat and lon required" });
+
+  const gridData = readJSON("idw_grid.json", { stations: [] });
+  const stations = (gridData.stations || []).map(st => ({
+    ...st,
+    dist: haversineDistance(lat, lon, st.lat, st.lon)
+  })).filter(st => st.dist <= radius && st.value != null)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 10)
+    .map(st => ({
+      stationId: st.station_id,
+      name: st.name || st.station_id,
+      city: st.city || "India",
+      lat: st.lat,
+      lon: st.lon,
+      aqi: st.value,
+      category: getCategory(st.value).category,
+      color: getCategory(st.value).color,
+      distanceKm: Number(st.dist.toFixed(1)),
+      source: "CPCB CAAQMS Ground Station"
+    }));
+
+  res.json({
+    queryPoint: { lat, lon },
+    radiusKm: radius,
+    totalStationsFound: stations.length,
+    stations
   });
 });
 
