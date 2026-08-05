@@ -339,39 +339,42 @@ app.get("/api/aqi/interpolate", async (req, res) => {
 
   // Try live satellite/station Open-Meteo feed for exact coordinates
   const liveAir = await fetchLiveOpenMeteoAqi(lat, lon);
+  const satelliteAqi = liveAir ? liveAir.liveAqi : null;
+  const stationAqi = (nearestStation && nearestStation.value) ? nearestStation.value : null;
 
   let finalAqi;
   let pm25, pm10, no2, so2;
 
-  // If click is right on a station (distance <= 2 km), use the station's exact live value for 100% alignment
-  if (minDistance <= 2.0 && nearestStation && nearestStation.value) {
-    finalAqi = nearestStation.value;
-    pm25 = liveAir ? liveAir.pm25 : Number((finalAqi * 0.45).toFixed(1));
-    pm10 = liveAir ? liveAir.pm10 : Number((finalAqi * 0.75).toFixed(1));
-    no2 = liveAir ? liveAir.no2 : Number((Math.min(finalAqi * 0.25 + 15, 120)).toFixed(1));
-    so2 = liveAir ? liveAir.so2 : Number((Math.min(finalAqi * 0.08 + 5, 45)).toFixed(1));
-  } else if (liveAir && liveAir.liveAqi) {
-    finalAqi = liveAir.liveAqi;
-    pm25 = liveAir.pm25;
-    pm10 = liveAir.pm10;
-    no2 = liveAir.no2;
-    so2 = liveAir.so2;
+  // Spatial IDW Distance-Weighted Blending Engine:
+  // Blends station ground truth with satellite grid to produce continuous spatial gradients without step-cliffs
+  if (nearestStation && stationAqi != null) {
+    if (minDistance <= 0.5) {
+      // Within 500m of monitoring station: 100% Station Ground Truth
+      finalAqi = stationAqi;
+    } else if (minDistance <= 25.0 && satelliteAqi != null) {
+      // Between 0.5 km and 25 km: Smooth Inverse Distance Weighted (IDW) blending
+      const wStation = 1.0 / Math.pow(Math.max(minDistance, 0.5), 1.5);
+      const wSatellite = 1.0 / Math.pow(8.0, 1.5); // 8 km characteristic decay scale
+      finalAqi = Math.round((wStation * stationAqi + wSatellite * satelliteAqi) / (wStation + wSatellite));
+    } else if (satelliteAqi != null) {
+      finalAqi = satelliteAqi;
+    } else {
+      finalAqi = stationAqi;
+    }
+  } else if (satelliteAqi != null) {
+    finalAqi = satelliteAqi;
   } else {
-    // Fallback to spatial IDW interpolation from local station database
-    const MAX_RADIUS_KM = 150;
-    const nearbyStations = stationsWithDist.filter(s => s.dist <= MAX_RADIUS_KM);
-    const useStations = nearbyStations.length >= 3 ? nearbyStations : stationsWithDist.slice(0, 3);
+    finalAqi = 50;
+  }
 
-    let weightSum = 0;
-    let valueSum = 0;
-    useStations.forEach((st) => {
-      const d = Math.max(st.dist, 0.5);
-      const w = 1.0 / (d * d);
-      weightSum += w;
-      valueSum += w * st.value;
-    });
-
-    finalAqi = Math.round(valueSum / weightSum);
+  // Scale individual pollutant concentrations proportionally to final interpolated AQI
+  if (liveAir) {
+    const ratio = satelliteAqi ? (finalAqi / satelliteAqi) : 1.0;
+    pm25 = Number((liveAir.pm25 * ratio).toFixed(1));
+    pm10 = Number((liveAir.pm10 * ratio).toFixed(1));
+    no2 = Number((liveAir.no2 * ratio).toFixed(1));
+    so2 = Number((liveAir.so2 * ratio).toFixed(1));
+  } else {
     pm25 = Number((finalAqi * 0.45).toFixed(1));
     pm10 = Number((finalAqi * 0.75).toFixed(1));
     no2 = Number((Math.min(finalAqi * 0.25 + 15, 120)).toFixed(1));
