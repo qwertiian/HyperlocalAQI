@@ -345,22 +345,32 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   let finalAqi;
   let pm25, pm10, no2, so2;
 
-  // Spatial IDW Distance-Weighted Blending Engine:
-  // Blends station ground truth with satellite grid to produce continuous spatial gradients without step-cliffs
-  if (nearestStation && stationAqi != null) {
-    if (minDistance <= 0.5) {
-      // Within 500m of monitoring station: 100% Station Ground Truth
-      finalAqi = stationAqi;
-    } else if (minDistance <= 25.0 && satelliteAqi != null) {
-      // Between 0.5 km and 25 km: Smooth Inverse Distance Weighted (IDW) blending
-      const wStation = 1.0 / Math.pow(Math.max(minDistance, 0.5), 1.5);
-      const wSatellite = 1.0 / Math.pow(8.0, 1.5); // 8 km characteristic decay scale
-      finalAqi = Math.round((wStation * stationAqi + wSatellite * satelliteAqi) / (wStation + wSatellite));
-    } else if (satelliteAqi != null) {
-      finalAqi = satelliteAqi;
-    } else {
-      finalAqi = stationAqi;
-    }
+  // Spatial Multi-Station IDW Surface Engine (Top 5 nearby CPCB ground stations)
+  const nearbyGroundStations = stationsWithDist.filter(s => s.dist <= 100 && s.value != null);
+  const topStations = nearbyGroundStations.slice(0, 5);
+
+  let groundIdwAqi = 0;
+  if (topStations.length > 0) {
+    let sumWeight = 0;
+    let sumWeightedAqi = 0;
+    topStations.forEach(st => {
+      const d = Math.max(st.dist, 0.1);
+      const w = 1.0 / Math.pow(d, 2.0); // IDW Inverse Distance Power p=2.0
+      sumWeight += w;
+      sumWeightedAqi += w * st.value;
+    });
+    groundIdwAqi = Math.round(sumWeightedAqi / sumWeight);
+  } else if (nearestStation && nearestStation.value != null) {
+    groundIdwAqi = nearestStation.value;
+  }
+
+  // Smooth Regional Blending between Multi-Station Ground IDW and Satellite Grid
+  if (groundIdwAqi > 0 && satelliteAqi != null) {
+    // Ground station network governs urban corridors (90% weight at station, decaying smoothly to 40% at 30km)
+    const alpha = Math.max(0.35, 0.90 * Math.exp(-minDistance / 18.0));
+    finalAqi = Math.round(alpha * groundIdwAqi + (1.0 - alpha) * satelliteAqi);
+  } else if (groundIdwAqi > 0) {
+    finalAqi = groundIdwAqi;
   } else if (satelliteAqi != null) {
     finalAqi = satelliteAqi;
   } else {
