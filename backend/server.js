@@ -238,6 +238,11 @@ function fetchWaqiStationFeed(lat, lon) {
     req.setTimeout(1200, () => { req.destroy(); resolve(null); });
     req.on("error", () => resolve(null));
   });
+function withTimeout(promise, ms = 800, fallback = null) {
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+  ]);
 }
 
 // NASA FIRMS VIIRS Satellite Thermal Active Stubble Burning & Wildfire Hotspots API
@@ -581,10 +586,11 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     });
   }
 
-  // Parallel fetch live Open-Meteo satellite feed and WAQI real-time CPCB station feed
-  const [liveAir, waqiData] = await Promise.all([
-    fetchLiveOpenMeteoAqi(lat, lon),
-    fetchWaqiStationFeed(lat, lon)
+  // Parallel fetch live Open-Meteo satellite feed, WAQI real-time CPCB station feed, and live weather with 800ms max timeout
+  const [liveAir, waqiData, weather] = await Promise.all([
+    withTimeout(fetchLiveOpenMeteoAqi(lat, lon), 800, null),
+    withTimeout(fetchWaqiStationFeed(lat, lon), 800, null),
+    withTimeout(fetchOpenMeteo(lat, lon), 800, null)
   ]);
 
   const satelliteAqi = liveAir ? liveAir.liveAqi : null;
@@ -626,9 +632,6 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   }
 
   // ━━━ Atmospheric Physics & Multi-Source Attribution Engine ━━━
-  let weather = null;
-  try { weather = await fetchOpenMeteo(lat, lon); } catch(e) {}
-
   const attribution = computePhysicsAttribution(lat, lon, groundIdwAqi || satelliteAqi || 50, weather);
   finalAqi = attribution.finalFusedAqi;
 
