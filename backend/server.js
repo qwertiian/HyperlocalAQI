@@ -613,6 +613,7 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   }
 
   // Smooth Regional Blending between Multi-Station Ground IDW and Satellite Grid
+  let finalAqi = 50;
   if (groundIdwAqi > 0 && satelliteAqi != null) {
     const alpha = Math.max(0.35, 0.90 * Math.exp(-minDistance / 18.0));
     finalAqi = Math.round(alpha * groundIdwAqi + (1.0 - alpha) * satelliteAqi);
@@ -632,6 +633,7 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   finalAqi = attribution.finalFusedAqi;
 
   // Scale individual pollutant concentrations proportionally to final interpolated AQI
+  let pm25 = 20, pm10 = 40, no2 = 15, so2 = 8;
   if (liveAir) {
     const ratio = satelliteAqi ? (finalAqi / satelliteAqi) : 1.0;
     pm25 = Number((liveAir.pm25 * ratio).toFixed(1));
