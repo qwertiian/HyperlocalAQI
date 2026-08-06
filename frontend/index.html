@@ -1206,6 +1206,7 @@ function updateActiveLocation(data) {
   }
 
   if (data.nearbyIndustrialFacilities && data.nearbyIndustrialFacilities.length > 0) {
+    window.currentNearbyIndustrial = data.nearbyIndustrialFacilities;
     const box = document.getElementById("nearbyIndustrialBox");
     const list = document.getElementById("nearbyIndustrialList");
     const badge = document.getElementById("industrialCountBadge");
@@ -1226,6 +1227,7 @@ function updateActiveLocation(data) {
       `).join("");
     }
   } else {
+    window.currentNearbyIndustrial = [];
     const box = document.getElementById("nearbyIndustrialBox");
     if (box) box.style.display = "none";
   }
@@ -2060,6 +2062,35 @@ function generateComprehensivePdfReport() {
   const no2 = document.getElementById("no2Val") ? document.getElementById("no2Val").textContent : "—";
   const diag = document.getElementById("diagSummaryBox") ? document.getElementById("diagSummaryBox").textContent : "";
 
+  let industrialTableHtml = "";
+  if (window.currentNearbyIndustrial && window.currentNearbyIndustrial.length > 0) {
+    industrialTableHtml = `
+      <h3>🏭 Nearby Industrial Stack Sources (<35km)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Facility / Stack Name</th>
+            <th>Industry / Fuel Type</th>
+            <th>Distance (km)</th>
+            <th>Stack Capacity</th>
+            <th>Plume Impact Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${window.currentNearbyIndustrial.map(f => `
+            <tr>
+              <td><b>${f.name}</b></td>
+              <td>${f.type ? f.type.replace(/_/g, ' ') : 'Industrial Plant'}</td>
+              <td>${f.distanceKm} km away</td>
+              <td>${f.capacity_mw ? f.capacity_mw + ' MW' : 'Active Stack'}</td>
+              <td><b>${f.impactScore}</b></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
   const reportWin = window.open("", "_blank");
   reportWin.document.write(`
     <!DOCTYPE html>
@@ -2121,6 +2152,8 @@ function generateComprehensivePdfReport() {
           </tr>
         </tbody>
       </table>
+
+      ${industrialTableHtml}
 
       <h3>📜 CPCB Advisory & Civil Mitigation Protocol</h3>
       <ul>
