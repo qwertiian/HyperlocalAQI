@@ -539,7 +539,7 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
       industrialVal: industrialContributionVal,
       stubbleVal: stubbleContributionVal,
     },
-    topNearbyIndustrial,
+    topNearbyIndustrial: topIndustrial,
   };
 }
 
