@@ -830,6 +830,15 @@
           </div>
         </div>
 
+        <!-- Nearby Industrial Facilities Breakdown Box -->
+        <div id="nearbyIndustrialBox" style="margin-top:10px; display:none; background:white; padding:10px; border-radius:10px; border:1px solid rgba(226,232,240,0.8);">
+          <div style="font-size:11px; font-weight:700; color:#475569; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span>🏭 Nearby Industrial Stack Sources (<35km)</span>
+            <span id="industrialCountBadge" style="font-size:9.5px; background:#ef4444; color:white; padding:1px 6px; border-radius:6px;">0 Found</span>
+          </div>
+          <div id="nearbyIndustrialList" style="display:flex; flex-direction:column; gap:5px; font-size:10.5px; color:#334155;"></div>
+        </div>
+
         <button onclick="generateComprehensivePdfReport()" style="width:100%; margin-top:12px; background:linear-gradient(135deg, #7c3aed, #4f46e5); color:white; border:none; padding:10px; border-radius:12px; font-weight:700; font-size:11.5px; cursor:pointer; box-shadow:0 4px 12px rgba(124,58,237,0.25); display:flex; align-items:center; justify-content:center; gap:6px;">
           📄 Download Comprehensive Executive Environmental PDF Report
         </button>
@@ -1194,6 +1203,31 @@ function updateActiveLocation(data) {
 
   if (data.diagnosticSummary) {
     document.getElementById("diagSummaryBox").innerHTML = `💡 <b>Diagnostic Reason:</b> ${data.diagnosticSummary}`;
+  }
+
+  if (data.nearbyIndustrialFacilities && data.nearbyIndustrialFacilities.length > 0) {
+    const box = document.getElementById("nearbyIndustrialBox");
+    const list = document.getElementById("nearbyIndustrialList");
+    const badge = document.getElementById("industrialCountBadge");
+    if (box && list) {
+      box.style.display = "block";
+      badge.textContent = `${data.nearbyIndustrialFacilities.length} Nearby`;
+      list.innerHTML = data.nearbyIndustrialFacilities.map(f => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:6px 9px; border-radius:8px; border-left:3.5px solid #ef4444;">
+          <div>
+            <div style="font-weight:700; color:#1e293b; font-size:11px;">${f.name}</div>
+            <div style="font-size:9.5px; color:#64748b; margin-top:1px;">🏭 ${f.type ? f.type.replace(/_/g, ' ') : 'Industrial Plant'} • ${f.distanceKm} km away</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700; color:#dc2626; font-size:10.5px;">${f.capacity_mw ? f.capacity_mw + ' MW' : 'Active Stack'}</div>
+            <div style="font-size:9px; color:#94a3b8; margin-top:1px;">Impact: ${f.impactScore}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+  } else {
+    const box = document.getElementById("nearbyIndustrialBox");
+    if (box) box.style.display = "none";
   }
 
   // Auto-switch to forecast tab to show analytics

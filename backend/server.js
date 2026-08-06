@@ -456,15 +456,15 @@ function loadIndustrialSourcesData() {
 function computePhysicsAttribution(lat, lon, baseAqi, weather) {
   const sources = loadIndustrialSourcesData();
   
-  // 1. Find nearby industrial facilities within 60km using Haversine
+  // 1. Industrial Proximity & Plume Impact Calculation
   let industrialPoints = [];
   let totalIndustrialRawScore = 0;
 
   for (const s of sources) {
     const d = haversineDistance(lat, lon, s.lat, s.lon);
-    if (d <= 60) {
-      // Gaussian plume dispersion decay: intensity * exp(-d / 18)
-      const impact = (s.emission_intensity || 50) * Math.exp(-d / 18.0);
+    if (d <= 35) {
+      // Gaussian plume dispersion decay with 7.0km scale: intensity * exp(-d / 7.0)
+      const impact = (s.emission_intensity || 50) * Math.exp(-d / 7.0);
       totalIndustrialRawScore += impact;
       industrialPoints.push({ ...s, distanceKm: Number(d.toFixed(1)), impactScore: Number(impact.toFixed(1)) });
     }
@@ -477,12 +477,16 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
   const istHour = nowIST.getUTCHours();
   const month = nowIST.getUTCMonth(); // 0-11
   const isRushHour = (istHour >= 7 && istHour <= 10) || (istHour >= 17 && istHour <= 21);
-  const trafficMultiplier = isRushHour ? 1.28 : 1.10;
+  const trafficMultiplier = isRushHour ? 1.25 : 1.10;
   const trafficContributionVal = Math.round(baseAqi * (trafficMultiplier - 1.0));
 
   // 3. Industrial Contribution Calculation
-  const industrialBoostPct = Math.min(0.35, (totalIndustrialRawScore / 180.0) * 0.30);
-  const industrialContributionVal = Math.round(baseAqi * industrialBoostPct);
+  // If totalIndustrialRawScore is negligible (< 4.0), industrial share is 0%
+  let industrialContributionVal = 0;
+  if (totalIndustrialRawScore >= 4.0) {
+    const industrialBoostPct = Math.min(0.40, (totalIndustrialRawScore / 90.0) * 0.35);
+    industrialContributionVal = Math.round(baseAqi * industrialBoostPct);
+  }
 
   // 4. Stubble / Biomass Heuristic (Oct-Nov North India)
   let stubbleContributionVal = 0;
@@ -492,7 +496,13 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
     stubbleContributionVal = Math.round(baseAqi * 0.35);
   }
 
-  // 5. Weather / Rain Washout vs Winter Inversion Diagnostic
+  // 5. Hyperlocal Plume AQI Elevation (When sitting right next to major coal plants/refineries)
+  let localIndustrialElevation = 0;
+  if (totalIndustrialRawScore >= 30.0) {
+    localIndustrialElevation = Math.min(50, Math.round((totalIndustrialRawScore - 30.0) * 0.40));
+  }
+
+  // 6. Weather / Rain Washout vs Winter Inversion Diagnostic
   let weatherFactor = 1.0;
   let weatherReason = "Normal Atmospheric Dispersion";
   
@@ -516,18 +526,21 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
     weatherReason = "🌬️ High Atmospheric Wind Dispersion (-15% Dilution)";
   }
 
-  const rawSum = baseAqi + trafficContributionVal + industrialContributionVal + stubbleContributionVal;
-  const finalFusedAqi = baseAqi ? Math.round(baseAqi) : Math.max(12, Math.min(500, Math.round(rawSum * weatherFactor)));
+  const unadjustedSum = baseAqi + localIndustrialElevation;
+  const finalFusedAqi = Math.max(12, Math.min(500, Math.round(unadjustedSum * weatherFactor)));
 
   const totalLoad = Math.max(1, baseAqi + trafficContributionVal + industrialContributionVal + stubbleContributionVal);
   const trafficPct = Math.round((trafficContributionVal / totalLoad) * 100);
-  const industrialPct = Math.round((industrialContributionVal / totalLoad) * 100);
+  const industrialPct = totalIndustrialRawScore >= 4.0 ? Math.round((industrialContributionVal / totalLoad) * 100) : 0;
   const stubblePct = Math.round((stubbleContributionVal / totalLoad) * 100);
   const backgroundPct = Math.max(0, 100 - trafficPct - industrialPct - stubblePct);
 
   let diagnosticSummary = "";
-  if (weatherFactor < 0.85) {
-    diagnosticSummary = `AQI is currently ${finalFusedAqi} (Suppressed/Moderate) primarily due to ${weatherReason.toLowerCase()}. Primary AQI contributions: Vehicular Traffic (${trafficPct}%) and Industrial Facilities (${industrialPct}%).`;
+  if (topIndustrial.length > 0 && industrialPct > 15) {
+    const topPlantName = topIndustrial[0].name;
+    diagnosticSummary = `AQI is currently ${finalFusedAqi} (${getCategory(finalFusedAqi).category}) under ${weatherReason.toLowerCase()}. Primary AQI driver: Industrial Stack Emissions (${industrialPct}%) led by nearby ${topPlantName} (${topIndustrial[0].distanceKm} km away) and Vehicular Traffic (${trafficPct}%).`;
+  } else if (weatherFactor < 0.85) {
+    diagnosticSummary = `AQI is currently ${finalFusedAqi} (Suppressed/Moderate) primarily due to ${weatherReason.toLowerCase()}. Primary AQI contributions: Vehicular Traffic (${trafficPct}%) and Regional Background (${backgroundPct}%).`;
   } else if (finalFusedAqi > 250) {
     diagnosticSummary = `AQI is SEVERE (${finalFusedAqi}) driven by heavy urban traffic bottlenecks (${trafficPct}%), nearby industrial stack emissions (${industrialPct}%), and ${weatherReason.toLowerCase()}.`;
   } else {
