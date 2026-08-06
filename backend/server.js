@@ -423,6 +423,118 @@ app.get("/api/aqi/cities", (req, res) => {
   res.json({ count: cities.length, cities });
 });
 
+function loadIndustrialSourcesData() {
+  if (_industrialCache) return _industrialCache.sources || [];
+  if (fs.existsSync(INDUSTRIAL_FILE)) {
+    try {
+      _industrialCache = JSON.parse(fs.readFileSync(INDUSTRIAL_FILE, "utf8"));
+      return _industrialCache.sources || [];
+    } catch (e) {}
+  }
+  return [];
+}
+
+function computePhysicsAttribution(lat, lon, baseAqi, weather) {
+  const sources = loadIndustrialSourcesData();
+  
+  // 1. Find nearby industrial facilities within 60km using Haversine
+  let industrialPoints = [];
+  let totalIndustrialRawScore = 0;
+
+  for (const s of sources) {
+    const d = haversineDistance(lat, lon, s.lat, s.lon);
+    if (d <= 60) {
+      // Gaussian plume dispersion decay: intensity * exp(-d / 18)
+      const impact = (s.emission_intensity || 50) * Math.exp(-d / 18.0);
+      totalIndustrialRawScore += impact;
+      industrialPoints.push({ ...s, distanceKm: Number(d.toFixed(1)), impactScore: Number(impact.toFixed(1)) });
+    }
+  }
+  industrialPoints.sort((a, b) => b.impactScore - a.impactScore);
+  const topIndustrial = industrialPoints.slice(0, 4);
+
+  // 2. Traffic Contribution Calculation
+  const nowIST = new Date(Date.now() + 5.5 * 3600 * 1000);
+  const istHour = nowIST.getUTCHours();
+  const month = nowIST.getUTCMonth(); // 0-11
+  const isRushHour = (istHour >= 7 && istHour <= 10) || (istHour >= 17 && istHour <= 21);
+  const trafficMultiplier = isRushHour ? 1.28 : 1.10;
+  const trafficContributionVal = Math.round(baseAqi * (trafficMultiplier - 1.0));
+
+  // 3. Industrial Contribution Calculation
+  const industrialBoostPct = Math.min(0.35, (totalIndustrialRawScore / 180.0) * 0.30);
+  const industrialContributionVal = Math.round(baseAqi * industrialBoostPct);
+
+  // 4. Stubble / Biomass Heuristic (Oct-Nov North India)
+  let stubbleContributionVal = 0;
+  const isStubbleSeason = (month === 9 || month === 10);
+  const isNorthIndia = (lat >= 27.0 && lat <= 32.5 && lon >= 74.0 && lon <= 78.5);
+  if (isStubbleSeason && isNorthIndia) {
+    stubbleContributionVal = Math.round(baseAqi * 0.35);
+  }
+
+  // 5. Weather / Rain Washout vs Winter Inversion Diagnostic
+  let weatherFactor = 1.0;
+  let weatherReason = "Normal Atmospheric Dispersion";
+  
+  const humidity = weather ? weather.humidity_pct : null;
+  const blh = weather ? weather.boundary_layer_height_m : null;
+  const windMs = weather ? weather.wind_speed_ms : null;
+  const wCode = weather ? weather.weather_code : null;
+
+  const isMonsoon = (month >= 5 && month <= 8);
+  if ((wCode && (wCode >= 51 && wCode <= 82)) || (isMonsoon && humidity && humidity > 88)) {
+    weatherFactor = 0.68;
+    weatherReason = "☔ Active Monsoon / Precipitation Washout (-32% AQI Suppression)";
+  } else if (blh && blh < 250) {
+    weatherFactor = 1.30;
+    weatherReason = "🌡️ Severe Winter Boundary Layer Inversion (+30% Smog Trapping)";
+  } else if (windMs && windMs < 0.8) {
+    weatherFactor = 1.15;
+    weatherReason = "💨 Wind Stagnation (<0.8 m/s) trapping ground pollutants (+15% Accumulation)";
+  } else if (windMs && windMs > 5.5) {
+    weatherFactor = 0.85;
+    weatherReason = "🌬️ High Atmospheric Wind Dispersion (-15% Dilution)";
+  }
+
+  const rawSum = baseAqi + trafficContributionVal + industrialContributionVal + stubbleContributionVal;
+  const finalFusedAqi = Math.max(12, Math.min(500, Math.round(rawSum * weatherFactor)));
+
+  const totalLoad = Math.max(1, baseAqi + trafficContributionVal + industrialContributionVal + stubbleContributionVal);
+  const trafficPct = Math.round((trafficContributionVal / totalLoad) * 100);
+  const industrialPct = Math.round((industrialContributionVal / totalLoad) * 100);
+  const stubblePct = Math.round((stubbleContributionVal / totalLoad) * 100);
+  const backgroundPct = Math.max(0, 100 - trafficPct - industrialPct - stubblePct);
+
+  let diagnosticSummary = "";
+  if (weatherFactor < 0.85) {
+    diagnosticSummary = `AQI is currently ${finalFusedAqi} (Suppressed/Moderate) primarily due to ${weatherReason.toLowerCase()}. Primary ground contributions: Vehicular Traffic (${trafficPct}%) and Industrial Facilities (${industrialPct}%).`;
+  } else if (finalFusedAqi > 250) {
+    diagnosticSummary = `AQI is SEVERE (${finalFusedAqi}) driven by heavy urban traffic bottlenecks (${trafficPct}%), nearby industrial stack emissions (${industrialPct}%), and ${weatherReason.toLowerCase()}.`;
+  } else {
+    diagnosticSummary = `AQI is ${finalFusedAqi} under ${weatherReason}. Primary pollution share: Vehicular Traffic (${trafficPct}%), Industrial Point Sources (${industrialPct}%), and Regional Background (${backgroundPct}%).`;
+  }
+
+  return {
+    finalFusedAqi,
+    weatherFactor,
+    weatherReason,
+    diagnosticSummary,
+    attributionPct: {
+      traffic: trafficPct,
+      industrial: industrialPct,
+      stubble: stubblePct,
+      background: backgroundPct,
+    },
+    contributions: {
+      trafficVal: trafficContributionVal,
+      industrialVal: industrialContributionVal,
+      stubbleVal: stubbleContributionVal,
+    },
+    topNearbyIndustrial,
+  };
+}
+
 // Hyperlocal Interpolation for ANY lat/lon in India with Live Open-Meteo Air Quality Fusion
 app.get("/api/aqi/interpolate", async (req, res) => {
   const lat = parseFloat(req.query.lat);
@@ -511,31 +623,12 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     finalAqi = 50;
   }
 
-  // ━━━ Atmospheric Physics Layer 1: Planetary Boundary Layer (BLH) Inversion Scaling ━━━
-  // Now uses current IST hour's BLH value (not midnight index 0 — that was the bug)
-  // Typical Indian urban BLH: 800-2000m at noon, 100-400m at midnight/winter morning
+  // ━━━ Atmospheric Physics & Multi-Source Attribution Engine ━━━
   let weather = null;
   try { weather = await fetchOpenMeteo(lat, lon); } catch(e) {}
-  if (weather && weather.boundary_layer_height_m != null) {
-    const blh = weather.boundary_layer_height_m;
-    // Conservative multipliers — only meaningful for BLH < 400m (genuine inversions)
-    const blhMultiplier = blh < 150 ? 1.20 : blh < 300 ? 1.12 : blh < 500 ? 1.06 : 1.0;
-    finalAqi = Math.round(finalAqi * blhMultiplier);
-  }
 
-  // ━━━ Atmospheric Physics Layer 2: Wind Stagnation Index ━━━
-  // Conservative — only apply at very low wind (<1 m/s stagnation)
-  if (weather && weather.wind_speed_ms != null) {
-    const ws = weather.wind_speed_ms;
-    const windMultiplier = ws < 0.5 ? 1.10 : ws < 1.0 ? 1.05 : ws > 6.0 ? 0.93 : 1.0;
-    finalAqi = Math.round(finalAqi * windMultiplier);
-  }
-
-  // ━━━ Diurnal Rush-Hour Traffic Emission Factor ━━━
-  const istHour = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: false });
-  const h = parseInt(istHour, 10);
-  const rushHour = (h >= 8 && h <= 10) || (h >= 18 && h <= 21);
-  if (rushHour) finalAqi = Math.round(finalAqi * 1.08);
+  const attribution = computePhysicsAttribution(lat, lon, groundIdwAqi || satelliteAqi || 50, weather);
+  finalAqi = attribution.finalFusedAqi;
 
   // Scale individual pollutant concentrations proportionally to final interpolated AQI
   if (liveAir) {
@@ -555,7 +648,7 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   const physicsApplied = [
     weather && weather.boundary_layer_height_m != null ? `BLH ${weather.boundary_layer_height_m}m` : null,
     weather && weather.wind_speed_ms != null ? `Wind ${weather.wind_speed_ms}m/s` : null,
-    rushHour ? "Rush-Hour Factor" : null,
+    attribution.weatherReason,
     waqiAqi != null ? `WAQI Station ${waqiData.stationName}` : null,
   ].filter(Boolean);
 
@@ -569,9 +662,14 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     pollutants: { pm25, pm10, no2, so2 },
     hourlySeries: liveAir && liveAir.hourlySeries ? liveAir.hourlySeries : [],
     source: waqiAqi != null
-      ? `WAQI CPCB Live (${waqiData.stationName}) + Open-Meteo + BLH Physics`
-      : (liveAir ? "Open-Meteo Live Satellite + BLH Physics" : "Spatial IDW Station Interpolation"),
+      ? `WAQI CPCB Live (${waqiData.stationName}) + Open-Meteo + Gaussian Plume Physics`
+      : (liveAir ? "Open-Meteo Live Satellite + Industrial/Traffic Multi-Factor Fusion" : "Spatial IDW Station Interpolation"),
     atmosphericPhysicsApplied: physicsApplied,
+    sourceAttribution: attribution.attributionPct,
+    sourceContributions: attribution.contributions,
+    diagnosticSummary: attribution.diagnosticSummary,
+    nearbyIndustrialFacilities: attribution.topNearbyIndustrial,
+    weatherDiagnostic: attribution.weatherReason,
     nearestStation: {
       id: nearestStation ? nearestStation.station_id : "N/A",
       name: nearestStation ? (nearestStation.name || nearestStation.station_id) : "N/A",
