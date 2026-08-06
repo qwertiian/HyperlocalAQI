@@ -647,6 +647,9 @@
     <div class="click-banner">
       <span>📍 Click ANY spot on the map in India for real-time spatial AQI interpolation</span>
     </div>
+    <button class="map-overlay-btn" id="btnToggleIndustrial" onclick="toggleIndustrialLayer()" style="position:absolute; top:16px; right:240px; z-index:1000; background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(59,130,246,0.5); padding:7px 13px; border-radius:20px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.15); transition:all 0.2s ease;">
+      🏭 Industrial Facilities (826)
+    </button>
     <button class="map-overlay-btn" id="btnToggleFirms" onclick="toggleNasaFirmsFires()" style="position:absolute; top:16px; right:16px; z-index:1000; background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(249,115,22,0.5); padding:7px 13px; border-radius:20px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.15); transition:all 0.2s ease;">
       🔥 NASA Satellite Fires (VIIRS)
     </button>
@@ -746,6 +749,26 @@
           <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
             <div style="font-size:11px; font-weight:700; color:var(--text-muted);">🏔️ BOUNDARY LAYER</div>
             <div style="font-size:16px; font-weight:800; margin-top:2px;" id="wBLH">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Vehicular Traffic & Tailpipe Multiplier Card -->
+      <div class="glass-card" id="trafficCard" style="background: linear-gradient(135deg, rgba(238, 242, 255, 0.95), rgba(243, 244, 246, 0.95)); border-color: rgba(99, 102, 241, 0.4); margin-top: 12px;">
+        <div class="card-title">
+          <span>🚗 Live Vehicular Traffic & Tailpipe Multiplier</span>
+          <span style="font-size:10px; font-weight:600; color:#4f46e5; background:rgba(99,102,241,0.1); padding:2px 8px; border-radius:8px;" id="trafficSourceTag">TomTom API Live</span>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:10px; font-weight:700; color:var(--text-muted);">🚗 SPEED & CONGESTION</div>
+            <div style="font-size:15px; font-weight:800; margin-top:2px; color:#1e1b4b;" id="tSpeedVal">— km/h</div>
+            <div style="font-size:10px; font-weight:600; color:#6366f1;" id="tCongestionVal">Congestion: —%</div>
+          </div>
+          <div style="background:white; padding:10px; border-radius:12px; border:1px solid rgba(226,232,240,0.8);">
+            <div style="font-size:10px; font-weight:700; color:var(--text-muted);">🏎️ NO2 TAILPIPE MULTIPLIER</div>
+            <div style="font-size:15px; font-weight:800; margin-top:2px; color:#dc2626;" id="tNo2Mult">—x</div>
+            <div style="font-size:10px; font-weight:600; color:#d97706;" id="tDiurnalTag">IST Rush Surge: 1.0x</div>
           </div>
         </div>
       </div>
@@ -1074,6 +1097,7 @@ async function loadWeather(lat, lon, label) {
     document.getElementById('wUV').textContent = w.uv_index != null ? w.uv_index : '—';
     document.getElementById('wBLH').textContent = w.boundary_layer_height_m != null ? `${w.boundary_layer_height_m} m` : '—';
     if (label) document.getElementById('weatherLocation').textContent = label;
+    loadTrafficData(lat, lon);
   } catch(e) { console.warn('Weather fetch failed', e); }
 }
 
@@ -1722,6 +1746,84 @@ async function toggleNasaFirmsFires() {
   } catch (e) {
     btn.innerHTML = "⚠️ Could not load NASA satellite data";
     setTimeout(() => { btn.innerHTML = "🔥 NASA Thermal Satellite Stubble Fires (VIIRS)"; }, 3000);
+  }
+}
+
+let industrialLayerGroup = null;
+let industrialActive = false;
+
+async function toggleIndustrialLayer() {
+  const btn = document.getElementById("btnToggleIndustrial");
+  if (industrialActive) {
+    if (industrialLayerGroup && map) map.removeLayer(industrialLayerGroup);
+    industrialActive = false;
+    btn.style.background = "rgba(15,23,42,0.85)";
+    btn.innerHTML = "🏭 Industrial Facilities (826)";
+    return;
+  }
+
+  btn.innerHTML = "⏳ Loading 826 GEM Facilities...";
+  try {
+    const res = await fetch(`${API_BASE}/industrial-sources`);
+    const data = await res.json();
+    const sources = data.sources || [];
+
+    if (industrialLayerGroup && map) map.removeLayer(industrialLayerGroup);
+    industrialLayerGroup = L.layerGroup();
+
+    const typeIcons = {
+      coal_power:    { color: "#dc2626", label: "⚡ Coal Power Plant" },
+      oil_gas_power: { color: "#9333ea", label: "⛽ Gas & Oil Power Plant" },
+      steel:         { color: "#475569", label: "🏗️ Steel Plant" },
+      cement:        { color: "#d97706", label: "🧱 Cement Plant" },
+    };
+
+    sources.forEach(s => {
+      const cfg = typeIcons[s.type] || { color: "#2563eb", label: "🏭 Industry" };
+      const circle = L.circleMarker([s.lat, s.lon], {
+        radius: Math.max(4, Math.min(10, (s.emission_intensity || 50) / 10)),
+        fillColor: cfg.color,
+        color: "#ffffff",
+        weight: 1.2,
+        opacity: 0.9,
+        fillOpacity: 0.85
+      }).bindPopup(`
+        <div style="font-size:12px; font-weight:800; color:#0f172a;">${s.name}</div>
+        <div style="font-size:11px; font-weight:700; color:${cfg.color}; margin-top:2px;">${cfg.label}</div>
+        <div style="font-size:10px; color:#475569; margin-top:4px;">
+          📍 State: ${s.state || 'India'}<br/>
+          ${s.capacity_mw ? `⚡ Capacity: ${s.capacity_mw} MW<br/>` : ''}
+          ${s.co2_mtpa ? `🌍 Annual CO2: ${s.co2_mtpa} MTPA<br/>` : ''}
+          🔥 Emission Score: <b>${s.emission_intensity}/100</b>
+        </div>
+      `);
+      industrialLayerGroup.addLayer(circle);
+    });
+
+    industrialLayerGroup.addTo(map);
+    industrialActive = true;
+    btn.style.background = "linear-gradient(135deg, #1e40af, #3b82f6)";
+    btn.innerHTML = `🏭 Industrial Point Sources (${sources.length} Active)`;
+  } catch (e) {
+    btn.innerHTML = "⚠️ Error Loading Industrial Layer";
+    setTimeout(() => { btn.innerHTML = "🏭 Industrial Facilities (826)"; }, 3000);
+  }
+}
+
+async function loadTrafficData(lat, lon) {
+  try {
+    const res = await fetch(`${API_BASE}/traffic?lat=${lat}&lon=${lon}`);
+    const data = await res.json();
+    if (data && data.current_speed_kmh != null) {
+      document.getElementById("tSpeedVal").textContent = `${data.current_speed_kmh} km/h`;
+      document.getElementById("tCongestionVal").textContent = `Congestion: ${data.congestion_index}%`;
+      document.getElementById("tNo2Mult").textContent = `${data.no2_multiplier}x`;
+      document.getElementById("tDiurnalTag").textContent = `IST Rush Surge: ${data.diurnal_factor}x`;
+      const tag = document.getElementById("trafficSourceTag");
+      if (tag) tag.textContent = data.source === "tomtom_live" ? "TomTom Live API" : "Diurnal Traffic Model";
+    }
+  } catch (e) {
+    console.warn("Traffic fetch error", e);
   }
 }
 
