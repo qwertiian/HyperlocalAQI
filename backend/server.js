@@ -238,6 +238,8 @@ function fetchWaqiStationFeed(lat, lon) {
     req.setTimeout(1200, () => { req.destroy(); resolve(null); });
     req.on("error", () => resolve(null));
   });
+}
+
 function withTimeout(promise, ms = 800, fallback = null) {
   return Promise.race([
     promise,
