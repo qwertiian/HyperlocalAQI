@@ -169,25 +169,22 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
           const rawNo2 = cur.nitrogen_dioxide != null ? cur.nitrogen_dioxide : 8.0;
           const rawSo2 = cur.sulphur_dioxide != null ? cur.sulphur_dioxide : 4.0;
 
-          const spatialHash = Math.abs(Math.sin(lat * 12.9898 + lon * 78.233) * 43758.5453) % 1;
-          const microFactor = 0.80 + (spatialHash * 0.40);
-
-          const pm25 = Math.max(rawPm25 * 1.85 * microFactor, 4.0);
-          const pm10 = Math.max(rawPm10 * 1.95 * microFactor, 8.0);
-          const no2 = Math.max(rawNo2 * 1.4 * microFactor, 3.0);
-          const so2 = Math.max(rawSo2 * 1.1 * microFactor, 1.5);
+          const pm25 = Math.max(rawPm25, 2.0);
+          const pm10 = Math.max(rawPm10, 5.0);
+          const no2 = Math.max(rawNo2, 2.0);
+          const so2 = Math.max(rawSo2, 1.0);
 
           const indianAqi = calculateIndianAqi(pm25, pm10, no2, so2);
 
           const hTimes = (data.hourly || {}).time || [];
           const hPm25 = (data.hourly || {}).pm2_5 || [];
           const hourlySeries = hTimes.slice(-24).map((t, idx) => {
-            const pVal = Math.max((hPm25[hTimes.length - 24 + idx] || rawPm25) * 1.85 * microFactor, 4.0);
+            const pVal = Math.max(hPm25[hTimes.length - 24 + idx] || rawPm25, 2.0);
             const hourLabel = t.split("T")[1] ? t.split("T")[1].substring(0, 5) : t;
             return {
               time: hourLabel,
               pm25: Number(pVal.toFixed(1)),
-              aqi: calculateIndianAqi(pVal, pVal * 1.9, 25, 8),
+              aqi: calculateIndianAqi(pVal, pVal * 1.8, 20, 5),
             };
           });
 
@@ -221,16 +218,20 @@ function fetchWaqiStationFeed(lat, lon) {
           if (json.status === "ok" && json.data) {
             const d = json.data;
             const iaqi = d.iaqi || {};
-            resolve({
-              stationName: d.city ? d.city.name : "CPCB Ground Sensor",
-              stationAqi: d.aqi,
-              geo: d.city && d.city.geo ? d.city.geo : [lat, lon],
-              pm25: iaqi.pm25 ? iaqi.pm25.v : null,
-              pm10: iaqi.pm10 ? iaqi.pm10.v : null,
-              no2: iaqi.no2 ? iaqi.no2.v : null,
-              so2: iaqi.so2 ? iaqi.so2.v : null,
-              attributions: d.attributions || []
-            });
+            const stGeo = d.city && d.city.geo ? d.city.geo : [lat, lon];
+            const distKm = haversineDistance(lat, lon, stGeo[0], stGeo[1]);
+            if (distKm <= 25.0) {
+              resolve({
+                stationName: d.city ? d.city.name : "CPCB Ground Sensor",
+                stationAqi: d.aqi,
+                geo: stGeo,
+                pm25: iaqi.pm25 ? iaqi.pm25.v : null,
+                pm10: iaqi.pm10 ? iaqi.pm10.v : null,
+                no2: iaqi.no2 ? iaqi.no2.v : null,
+                so2: iaqi.so2 ? iaqi.so2.v : null,
+                attributions: d.attributions || []
+              });
+            } else { resolve(null); }
           } else { resolve(null); }
         } catch (e) { resolve(null); }
       });
@@ -366,16 +367,26 @@ app.get("/api/aqi/metros", (req, res) => {
 
   const cityMap = {};
   stations.forEach((st) => {
-    const c = st.city || "Unknown";
+    let c = st.city || "Unknown";
+    if (c.includes("Bengaluru") || c.includes("Bangalore")) c = "Bengaluru";
+    else if (c.includes("Delhi")) c = "Delhi";
+    else if (c.includes("Mumbai") || c.includes("Bombay")) c = "Mumbai";
+    else if (c.includes("Nagpur")) c = "Nagpur";
+    else if (c.includes("Chennai")) c = "Chennai";
+    else if (c.includes("Kolkata")) c = "Kolkata";
+    else if (c.includes("Hyderabad")) c = "Hyderabad";
+    else if (c.includes("Ahmedabad")) c = "Ahmedabad";
+    else if (c.includes("Pune")) c = "Pune";
+
     if (!cityMap[c]) cityMap[c] = [];
-    cityMap[c].push(st.value);
+    if (st.value != null && !isNaN(st.value)) cityMap[c].push(st.value);
   });
 
   const metros = Object.keys(METRO_COORDS).map((cityName) => {
-    const vals = cityMap[cityName] || [120];
+    const vals = cityMap[cityName] || [45];
     const avgAqi = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
     const catInfo = getCategory(avgAqi);
-    const changePct = Number(((Math.random() * 6 - 3)).toFixed(1));
+    const changePct = Number(((Math.random() * 4 - 2)).toFixed(1));
 
     return {
       city: cityName,
@@ -598,19 +609,16 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   const satelliteAqi = liveAir ? liveAir.liveAqi : null;
   const waqiAqi = (waqiData && waqiData.stationAqi != null && !isNaN(waqiData.stationAqi)) ? Number(waqiData.stationAqi) : null;
 
-  // Spatial Multi-Station IDW Surface Engine (Top 5 nearby CPCB ground stations + WAQI Real-time CPCB)
+  // Spatial Multi-Station IDW Surface Engine (Top 5 nearby CPCB ground stations)
   const nearbyGroundStations = stationsWithDist.filter(s => s.dist <= 100 && s.value != null);
   const topStations = nearbyGroundStations.slice(0, 5);
 
   let groundIdwAqi = 0;
-  if (waqiAqi != null && waqiAqi > 0) {
-    // If WAQI direct CPCB feed is available for exact location, give heavy ground truth weight
-    groundIdwAqi = waqiAqi;
-  } else if (topStations.length > 0) {
+  if (topStations.length > 0) {
     let sumWeight = 0;
     let sumWeightedAqi = 0;
     topStations.forEach(st => {
-      const d = Math.max(st.dist, 0.1);
+      const d = Math.max(st.dist, 0.2); // avoid div by zero
       const w = 1.0 / Math.pow(d, 2.0); // IDW Inverse Distance Power p=2.0
       sumWeight += w;
       sumWeightedAqi += w * st.value;
@@ -620,13 +628,23 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     groundIdwAqi = nearestStation.value;
   }
 
+  // If WAQI direct station feed is available for exact location (< 3km), blend WAQI with ground IDW
+  if (waqiAqi != null && waqiAqi > 0 && minDistance <= 3.0) {
+    groundIdwAqi = Math.round(0.70 * groundIdwAqi + 0.30 * waqiAqi);
+  }
+
   // Smooth Regional Blending between Multi-Station Ground IDW and Satellite Grid
   let finalAqi = 50;
-  if (groundIdwAqi > 0 && satelliteAqi != null) {
-    const alpha = Math.max(0.35, 0.90 * Math.exp(-minDistance / 18.0));
-    finalAqi = Math.round(alpha * groundIdwAqi + (1.0 - alpha) * satelliteAqi);
-  } else if (groundIdwAqi > 0) {
-    finalAqi = groundIdwAqi;
+  if (groundIdwAqi > 0) {
+    if (minDistance <= 15) {
+      // In ground station coverage zone (<= 15 km), strictly preserve IDW ground truth
+      finalAqi = groundIdwAqi;
+    } else if (satelliteAqi != null) {
+      const alpha = Math.max(0.25, Math.exp(-(minDistance - 15) / 20.0));
+      finalAqi = Math.round(alpha * groundIdwAqi + (1.0 - alpha) * satelliteAqi);
+    } else {
+      finalAqi = groundIdwAqi;
+    }
   } else if (satelliteAqi != null) {
     finalAqi = satelliteAqi;
   } else {
@@ -634,7 +652,7 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   }
 
   // ━━━ Atmospheric Physics & Multi-Source Attribution Engine ━━━
-  const attribution = computePhysicsAttribution(lat, lon, groundIdwAqi || satelliteAqi || 50, weather);
+  const attribution = computePhysicsAttribution(lat, lon, finalAqi, weather);
   finalAqi = attribution.finalFusedAqi;
 
   // Scale individual pollutant concentrations proportionally to final interpolated AQI
