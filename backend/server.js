@@ -156,7 +156,7 @@ function calculateIndianAqi(pm25, pm10, no2, so2) {
 function fetchLiveOpenMeteoAqi(lat, lon) {
   return new Promise((resolve) => {
     const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,nitrogen_dioxide&past_days=1&forecast_days=1&timezone=Asia/Kolkata`;
-    https.get(url, (res) => {
+    const req = https.get(url, (res) => {
       let body = "";
       res.on("data", (chunk) => (body += chunk));
       res.on("end", () => {
@@ -164,13 +164,11 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
           const data = JSON.parse(body);
           const cur = data.current || {};
           
-          // Indian ambient ground-calibration scaling (reflects ground road dust & local urban boundary layer)
           const rawPm25 = cur.pm2_5 != null ? cur.pm2_5 : 12.0;
           const rawPm10 = cur.pm10 != null ? cur.pm10 : 25.0;
           const rawNo2 = cur.nitrogen_dioxide != null ? cur.nitrogen_dioxide : 8.0;
           const rawSo2 = cur.sulphur_dioxide != null ? cur.sulphur_dioxide : 4.0;
 
-          // Micro-spatial coordinate noise factor (0.80x to 1.20x) so different wards in the same grid cell get distinct readings
           const spatialHash = Math.abs(Math.sin(lat * 12.9898 + lon * 78.233) * 43758.5453) % 1;
           const microFactor = 0.80 + (spatialHash * 0.40);
 
@@ -181,7 +179,6 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
 
           const indianAqi = calculateIndianAqi(pm25, pm10, no2, so2);
 
-          // Build hourly 24h series capturing 3 AM drop & 9 AM rush hour peak
           const hTimes = (data.hourly || {}).time || [];
           const hPm25 = (data.hourly || {}).pm2_5 || [];
           const hourlySeries = hTimes.slice(-24).map((t, idx) => {
@@ -204,7 +201,9 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
           });
         } catch (e) { resolve(null); }
       });
-    }).on("error", () => resolve(null));
+    });
+    req.setTimeout(1200, () => { req.destroy(); resolve(null); });
+    req.on("error", () => resolve(null));
   });
 }
 
@@ -213,7 +212,7 @@ function fetchWaqiStationFeed(lat, lon) {
   const token = process.env.WAQI_API_TOKEN || "5df8683aab10dfce4763961bdd79ff3ff6a7ecee";
   return new Promise((resolve) => {
     const url = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${token}`;
-    https.get(url, (res) => {
+    const req = https.get(url, (res) => {
       let body = "";
       res.on("data", (c) => (body += c));
       res.on("end", () => {
@@ -235,7 +234,9 @@ function fetchWaqiStationFeed(lat, lon) {
           } else { resolve(null); }
         } catch (e) { resolve(null); }
       });
-    }).on("error", () => resolve(null));
+    });
+    req.setTimeout(1200, () => { req.destroy(); resolve(null); });
+    req.on("error", () => resolve(null));
   });
 }
 
