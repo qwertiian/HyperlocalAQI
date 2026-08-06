@@ -1049,7 +1049,7 @@ function initMap() {
     if (clickPinMarker) map.removeLayer(clickPinMarker);
 
     clickPinMarker = L.marker([lat, lon]).addTo(map)
-      .bindPopup(`📍 Querying AQI at (${lat.toFixed(3)}, ${lon.toFixed(3)})...`)
+      .bindPopup(`📍 Querying AQI at (${lat.toFixed(3)}, ${lon.toFixed(3)})...`, { autoClose: false, closeOnClick: false })
       .openPopup();
 
     // Instant panel feedback on click
@@ -1989,22 +1989,42 @@ async function toggleIndustrialLayer() {
     industrialLayerGroup = L.layerGroup();
 
     const typeIcons = {
-      coal_power:    { color: "#dc2626", label: "⚡ Coal Power Plant" },
-      oil_gas_power: { color: "#9333ea", label: "⛽ Gas & Oil Power Plant" },
-      steel:         { color: "#475569", label: "🏗️ Steel Plant" },
-      cement:        { color: "#d97706", label: "🧱 Cement Plant" },
+      coal_power:    { color: "#ef4444", border: "#ffffff", label: "⚡ Coal Power Plant", icon: "⚡" },
+      oil_gas_power: { color: "#a855f7", border: "#ffffff", label: "⛽ Gas & Oil Power Plant", icon: "⛽" },
+      steel:         { color: "#334155", border: "#ffffff", label: "🏗️ Steel Plant", icon: "🏗️" },
+      cement:        { color: "#d97706", border: "#ffffff", label: "🧱 Cement Plant", icon: "🧱" },
     };
 
     sources.forEach(s => {
-      const cfg = typeIcons[s.type] || { color: "#2563eb", label: "🏭 Industry" };
-      const circle = L.circleMarker([s.lat, s.lon], {
-        radius: 3.5,
-        fillColor: cfg.color,
-        color: "#ffffff",
-        weight: 0.8,
-        opacity: 0.9,
-        fillOpacity: 0.85
-      }).bindPopup(`
+      const cfg = typeIcons[s.type] || { color: "#2563eb", border: "#ffffff", label: "🏭 Industry", icon: "🏭" };
+      
+      const factoryIcon = L.divIcon({
+        className: 'industrial-factory-pin',
+        html: `
+          <div style="
+            width: 18px;
+            height: 18px;
+            background: ${cfg.color};
+            border: 1.5px solid ${cfg.border};
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            transform: rotate(45deg);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+          ">
+            <div style="transform: rotate(-45deg); font-size: 9px; line-height: 1; color: white;">
+              ${cfg.icon}
+            </div>
+          </div>
+        `,
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10]
+      });
+
+      const marker = L.marker([s.lat, s.lon], { icon: factoryIcon }).bindPopup(`
         <div style="font-size:12px; font-weight:800; color:#0f172a;">${s.name}</div>
         <div style="font-size:11px; font-weight:700; color:${cfg.color}; margin-top:2px;">${cfg.label}</div>
         <div style="font-size:10px; color:#475569; margin-top:4px;">
@@ -2013,18 +2033,9 @@ async function toggleIndustrialLayer() {
           ${s.co2_mtpa ? `🌍 Annual CO2: ${s.co2_mtpa} MTPA<br/>` : ''}
           🔥 Emission Score: <b>${s.emission_intensity}/100</b>
         </div>
-      `);
+      `, { autoClose: false });
 
-      circle.on('mouseover', function() {
-        this.setRadius(9);
-        this.setStyle({ weight: 2.5, color: '#1e293b' });
-      });
-      circle.on('mouseout', function() {
-        this.setRadius(3.5);
-        this.setStyle({ weight: 0.8, color: '#ffffff' });
-      });
-
-      industrialLayerGroup.addLayer(circle);
+      industrialLayerGroup.addLayer(marker);
     });
 
     industrialLayerGroup.addTo(map);
