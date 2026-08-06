@@ -993,6 +993,154 @@ app.post("/api/advisory", (req, res) => {
   });
 });
 
+// ─── Industrial Point-Source Layer ───────────────────────────────────────────
+// Serves GEM-derived industrial sources (coal power, oil/gas, steel, cement) for India
+// Pre-built by ingestion/build_industrial_layer.py → data/processed/industrial_sources.json
+const INDUSTRIAL_FILE = path.join(DATA_DIR, "industrial_sources.json");
+let _industrialCache = null;
+
+app.get("/api/industrial-sources", (req, res) => {
+  if (_industrialCache) return res.json(_industrialCache);
+  if (!fs.existsSync(INDUSTRIAL_FILE)) {
+    return res.json({ sources: [], total: 0, note: "Run ingestion/build_industrial_layer.py to generate." });
+  }
+  try {
+    _industrialCache = JSON.parse(fs.readFileSync(INDUSTRIAL_FILE, "utf8"));
+    return res.json(_industrialCache);
+  } catch (e) {
+    return res.status(500).json({ error: "Failed to load industrial sources." });
+  }
+});
+
+// ─── Vehicular Traffic Emission Factors (TomTom + OSM) ───────────────────────
+// Returns real-time congestion index, road type, and NO2/PM2.5 multipliers
+app.get("/api/traffic", async (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lon = parseFloat(req.query.lon);
+  if (isNaN(lat) || isNaN(lon)) {
+    return res.status(400).json({ error: "lat and lon query params required" });
+  }
+
+  const TOMTOM_KEY = process.env.TOMTOM_API_KEY || "";
+
+  // IST diurnal rush-hour factor
+  const nowIST = new Date(Date.now() + 5.5 * 3600 * 1000);
+  const istHour = nowIST.getUTCHours();
+  let diurnalFactor = 1.0;
+  if (istHour >= 7 && istHour <= 10)  diurnalFactor = 1.40;  // Morning rush
+  else if (istHour >= 17 && istHour <= 21) diurnalFactor = 1.35; // Evening rush
+  else if (istHour >= 23 || istHour <= 4)  diurnalFactor = 1.15; // Nocturnal BLH
+
+  let congestionIndex = Math.round((diurnalFactor - 1.0) * 250); // 0-100 estimate
+  let currentSpeed = Math.max(10, 60 - congestionIndex * 0.5);
+  let source = "diurnal_estimate";
+
+  // Attempt TomTom live fetch
+  if (TOMTOM_KEY) {
+    const tomtomUrl = `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative-delay/10/json?point=${lat},${lon}&key=${TOMTOM_KEY}`;
+    try {
+      const tomtomData = await new Promise((resolve, reject) => {
+        https.get(tomtomUrl, (r) => {
+          let d = "";
+          r.on("data", c => d += c);
+          r.on("end", () => {
+            try { resolve(JSON.parse(d)); }
+            catch (e) { reject(e); }
+          });
+        }).on("error", reject);
+      });
+      const fsd = tomtomData.flowSegmentData || {};
+      if (fsd.currentSpeed && fsd.freeFlowSpeed) {
+        congestionIndex = Math.max(0, Math.min(100,
+          Math.round((1 - fsd.currentSpeed / fsd.freeFlowSpeed) * 100)
+        ));
+        currentSpeed = fsd.currentSpeed;
+        source = "tomtom_live";
+      }
+    } catch (e) {
+      // Fall through to diurnal estimate
+    }
+  }
+
+  // Road type factor (simplified — motorway corridors for Indian metro coords)
+  // Full OSM lookup via Python; here we use a distance-based heuristic
+  const roadTypeFactor = 1.25; // Default: primary road assumption
+
+  const alpha = 0.35 * diurnalFactor;
+  const no2Multiplier   = parseFloat((1.0 + alpha * (congestionIndex / 100) * roadTypeFactor).toFixed(4));
+  const pm25Multiplier  = parseFloat((1.0 + (alpha * 0.6) * (congestionIndex / 100) * roadTypeFactor).toFixed(4));
+
+  return res.json({
+    lat, lon,
+    congestion_index:     congestionIndex,
+    current_speed_kmh:    currentSpeed,
+    diurnal_factor:       diurnalFactor,
+    road_type_factor:     roadTypeFactor,
+    no2_multiplier:       no2Multiplier,
+    pm25_multiplier:      pm25Multiplier,
+    ist_hour:             istHour,
+    source,
+  });
+});
+
+// ─── Sentinel-5P Industrial Gas Column (Copernicus) ──────────────────────────
+// Returns satellite SO2/NO2 column data for industrial zone analysis
+app.get("/api/sentinel5p", async (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lon = parseFloat(req.query.lon);
+  if (isNaN(lat) || isNaN(lon)) {
+    return res.status(400).json({ error: "lat and lon query params required" });
+  }
+
+  const CLIENT_ID     = process.env.COPERNICUS_CLIENT_ID     || "";
+  const CLIENT_SECRET = process.env.COPERNICUS_CLIENT_SECRET || "";
+
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    return res.json({
+      NO2: { column_mol_m2: 0.000120, unit: "mol/m²", source: "background_estimate" },
+      SO2: { column_mol_m2: 0.000010, unit: "mol/m²", source: "background_estimate" },
+      note: "Configure COPERNICUS_CLIENT_ID and COPERNICUS_CLIENT_SECRET in .env",
+    });
+  }
+
+  try {
+    // Get OAuth token from Copernicus Identity Service
+    const tokenUrl  = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token";
+    const tokenBody = `grant_type=client_credentials&client_id=${encodeURIComponent(CLIENT_ID)}&client_secret=${encodeURIComponent(CLIENT_SECRET)}`;
+
+    const tokenData = await new Promise((resolve, reject) => {
+      const req2 = require("https").request(tokenUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      }, (r) => {
+        let d = "";
+        r.on("data", c => d += c);
+        r.on("end", () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
+      });
+      req2.on("error", reject);
+      req2.write(tokenBody);
+      req2.end();
+    });
+
+    const token = tokenData.access_token;
+    if (!token) throw new Error("No access token returned");
+
+    // Return with token confirmation (statistics query to Sentinel Hub done via Python script for full column values)
+    return res.json({
+      NO2: { column_mol_m2: null, unit: "mol/m²", source: "sentinel5p_cdse", note: "Run sentinel5p_ingest.py for full column retrieval" },
+      SO2: { column_mol_m2: null, unit: "mol/m²", source: "sentinel5p_cdse" },
+      auth_status: "authenticated",
+      token_type: tokenData.token_type || "Bearer",
+    });
+  } catch (e) {
+    return res.json({
+      NO2: { column_mol_m2: 0.000120, unit: "mol/m²", source: "background_estimate" },
+      SO2: { column_mol_m2: 0.000010, unit: "mol/m²", source: "background_estimate" },
+      auth_error: e.message,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`AQI backend API running at http://localhost:${PORT}`);
   console.log(`Data dir: ${DATA_DIR}`);

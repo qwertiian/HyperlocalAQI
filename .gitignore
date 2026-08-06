@@ -24,6 +24,8 @@ __pycache__/
 *.sqlite3
 data/aqi.db
 data/raw/*.csv
+data/raw/*.xlsx
+data/raw/*.pdf
 logs/
 *.log
 
