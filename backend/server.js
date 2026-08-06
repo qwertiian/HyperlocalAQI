@@ -506,7 +506,7 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
   }
 
   const rawSum = baseAqi + trafficContributionVal + industrialContributionVal + stubbleContributionVal;
-  const finalFusedAqi = Math.max(12, Math.min(500, Math.round(rawSum * weatherFactor)));
+  const finalFusedAqi = baseAqi ? Math.round(baseAqi) : Math.max(12, Math.min(500, Math.round(rawSum * weatherFactor)));
 
   const totalLoad = Math.max(1, baseAqi + trafficContributionVal + industrialContributionVal + stubbleContributionVal);
   const trafficPct = Math.round((trafficContributionVal / totalLoad) * 100);
@@ -516,11 +516,11 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
 
   let diagnosticSummary = "";
   if (weatherFactor < 0.85) {
-    diagnosticSummary = `AQI is currently ${finalFusedAqi} (Suppressed/Moderate) primarily due to ${weatherReason.toLowerCase()}. Primary ground contributions: Vehicular Traffic (${trafficPct}%) and Industrial Facilities (${industrialPct}%).`;
+    diagnosticSummary = `AQI is currently ${finalFusedAqi} (Suppressed/Moderate) primarily due to ${weatherReason.toLowerCase()}. Primary AQI contributions: Vehicular Traffic (${trafficPct}%) and Industrial Facilities (${industrialPct}%).`;
   } else if (finalFusedAqi > 250) {
     diagnosticSummary = `AQI is SEVERE (${finalFusedAqi}) driven by heavy urban traffic bottlenecks (${trafficPct}%), nearby industrial stack emissions (${industrialPct}%), and ${weatherReason.toLowerCase()}.`;
   } else {
-    diagnosticSummary = `AQI is ${finalFusedAqi} under ${weatherReason}. Primary pollution share: Vehicular Traffic (${trafficPct}%), Industrial Point Sources (${industrialPct}%), and Regional Background (${backgroundPct}%).`;
+    diagnosticSummary = `AQI is ${finalFusedAqi} under ${weatherReason}. Primary AQI share: Vehicular Traffic (${trafficPct}%), Industrial Point Sources (${industrialPct}%), and Regional Background (${backgroundPct}%).`;
   }
 
   return {

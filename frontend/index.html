@@ -623,7 +623,7 @@
   </div>
   <div class="status-badge">
     <div class="pulse-dot"></div>
-    <span id="sysStatus">Postgres Cloud • Nationwide Active</span>
+    <span id="sysStatus">650 CPCB Real-Time Stations • Spatial AI Fusion</span>
   </div>
 </header>
 
@@ -647,12 +647,14 @@
     <div class="click-banner">
       <span>📍 Click ANY spot on the map in India for real-time spatial AQI interpolation</span>
     </div>
-    <button class="map-overlay-btn" id="btnToggleIndustrial" onclick="toggleIndustrialLayer()" style="position:absolute; top:16px; right:240px; z-index:1000; background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(59,130,246,0.5); padding:7px 13px; border-radius:20px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.15); transition:all 0.2s ease;">
-      🏭 Industrial Facilities (826)
-    </button>
-    <button class="map-overlay-btn" id="btnToggleFirms" onclick="toggleNasaFirmsFires()" style="position:absolute; top:16px; right:16px; z-index:1000; background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(249,115,22,0.5); padding:7px 13px; border-radius:20px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.15); transition:all 0.2s ease;">
-      🔥 NASA Satellite Fires (VIIRS)
-    </button>
+    <div style="position:absolute; top:16px; right:16px; z-index:1000; display:flex; align-items:center; gap:8px;">
+      <button class="map-overlay-btn" id="btnToggleIndustrial" onclick="toggleIndustrialLayer()" title="Toggle 826 GEM Industrial Point Sources" style="background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(59,130,246,0.6); padding:6px 14px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2); transition:all 0.25s ease;">
+        🏭 Industrial Sources (826)
+      </button>
+      <button class="map-overlay-btn" id="btnToggleFirms" onclick="toggleNasaFirmsFires()" title="Toggle NASA Thermal Active Stubble Fires" style="background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(249,115,22,0.6); padding:6px 14px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2); transition:all 0.25s ease;">
+        🔥 NASA Stubble Fires
+      </button>
+    </div>
     <div id="map"></div>
   </div>
 
@@ -776,7 +778,7 @@
       <!-- Source Attribution & Multi-Factor Diagnostic Card -->
       <div class="glass-card" id="attributionCard" style="background: linear-gradient(135deg, rgba(245, 243, 255, 0.95), rgba(253, 242, 248, 0.95)); border-color: rgba(168, 85, 247, 0.4); margin-top: 12px;">
         <div class="card-title">
-          <span>📊 Pollution Source Attribution & Atmospheric Diagnostics</span>
+          <span>📊 AQI Source Attribution & Atmospheric Diagnostics</span>
           <span style="font-size:10px; font-weight:700; color:#7e22ce; background:rgba(168,85,247,0.12); padding:2px 8px; border-radius:8px;">Physics-Fused Engine</span>
         </div>
         
@@ -1370,7 +1372,7 @@ async function loadSpatialGrid() {
 
     // Station markers — show CPCB dataset AQI; full live fusion loads only on click
     if (data.stations && data.stations.length) {
-      document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Stations • Postgres • Nationwide`;
+      document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Real-Time Stations • Spatial AI Fusion`;
 
       data.stations.forEach(s => {
         const stAqi = s.value || 0;
