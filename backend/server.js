@@ -453,7 +453,7 @@ function loadIndustrialSourcesData() {
   return [];
 }
 
-function computePhysicsAttribution(lat, lon, baseAqi, weather) {
+function computePhysicsAttribution(lat, lon, baseAqi, weather, isGroundTruthAnchor = false) {
   const sources = loadIndustrialSourcesData();
   
   // 1. Industrial Proximity & Plume Impact Calculation
@@ -513,8 +513,9 @@ function computePhysicsAttribution(lat, lon, baseAqi, weather) {
 
   const isMonsoon = (month >= 5 && month <= 8);
   if ((wCode && (wCode >= 51 && wCode <= 82)) || (isMonsoon && humidity && humidity > 88)) {
-    weatherFactor = 0.68;
-    weatherReason = "☔ Active Monsoon / Precipitation Washout (-32% AQI Suppression)";
+    // Only apply suppression to open-meteo models, not to direct ground-truth CPCB stations
+    weatherFactor = isGroundTruthAnchor ? 1.0 : 0.68;
+    weatherReason = isGroundTruthAnchor ? "☔ Active Monsoon Rain (Ground Station Sensor Verified)" : "☔ Active Monsoon / Precipitation Washout (-32% AQI Suppression)";
   } else if (blh && blh < 250) {
     weatherFactor = 1.30;
     weatherReason = "🌡️ Severe Winter Boundary Layer Inversion (+30% Smog Trapping)";
@@ -665,7 +666,8 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   }
 
   // ━━━ Atmospheric Physics & Multi-Source Attribution Engine ━━━
-  const attribution = computePhysicsAttribution(lat, lon, finalAqi, weather);
+  const isGroundAnchor = (minDistance <= 15);
+  const attribution = computePhysicsAttribution(lat, lon, finalAqi, weather, isGroundAnchor);
   finalAqi = attribution.finalFusedAqi;
 
   // Scale individual pollutant concentrations proportionally to final interpolated AQI
