@@ -155,7 +155,7 @@ function calculateIndianAqi(pm25, pm10, no2, so2) {
 
 function fetchLiveOpenMeteoAqi(lat, lon) {
   return new Promise((resolve) => {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,nitrogen_dioxide&past_days=1&forecast_days=1&timezone=Asia/Kolkata`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide&past_days=1&forecast_days=4&timezone=Asia/Kolkata`;
     const req = https.get(url, (res) => {
       let body = "";
       res.on("data", (chunk) => (body += chunk));
@@ -178,15 +178,81 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
 
           const hTimes = (data.hourly || {}).time || [];
           const hPm25 = (data.hourly || {}).pm2_5 || [];
-          const hourlySeries = hTimes.slice(-24).map((t, idx) => {
-            const pVal = Math.max(hPm25[hTimes.length - 24 + idx] || rawPm25, 2.0);
-            const hourLabel = t.split("T")[1] ? t.split("T")[1].substring(0, 5) : t;
-            return {
-              time: hourLabel,
-              pm25: Number(pVal.toFixed(1)),
-              aqi: calculateIndianAqi(pVal, pVal * 1.8, 20, 5),
-            };
-          });
+          const hPm10 = (data.hourly || {}).pm10 || [];
+          const hNo2 = (data.hourly || {}).nitrogen_dioxide || [];
+          const hSo2 = (data.hourly || {}).sulphur_dioxide || [];
+
+          // Find current hour index based on current time
+          const curTimeStr = cur.time || "";
+          let curIdx = hTimes.findIndex((t) => curTimeStr && t.startsWith(curTimeStr.substring(0, 13)));
+          if (curIdx === -1) {
+            curIdx = Math.min(24, Math.floor(hTimes.length / 4));
+          }
+
+          const sampledSeries = [];
+          const startIdx = Math.max(0, curIdx - 15);
+          const endIdx = Math.min(hTimes.length - 1, curIdx + 72);
+          const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+          for (let idx = startIdx; idx <= endIdx; idx += 3) {
+            // If we skip past curIdx, ensure curIdx itself is inserted
+            if (idx > curIdx && !sampledSeries.some((s) => s.diffHours === 0)) {
+              const ct = hTimes[curIdx];
+              const cp25 = Math.max(hPm25[curIdx] || rawPm25, 2.0);
+              const cp10 = Math.max(hPm10[curIdx] || cp25 * 1.6, 5.0);
+              const cpn2 = Math.max(hNo2[curIdx] || no2, 2.0);
+              const cps2 = Math.max(hSo2[curIdx] || so2, 1.0);
+              const chour = ct.split("T")[1] ? ct.split("T")[1].substring(0, 5) : "";
+              const cd = new Date(ct);
+              const cdayName = isNaN(cd.getDay()) ? "" : daysOfWeek[cd.getDay()];
+              sampledSeries.push({
+                time: chour,
+                displayTime: `Now (${chour})`,
+                fullTime: ct,
+                dayName: cdayName,
+                diffHours: 0,
+                isHistorical: true,
+                pm25: Number(cp25.toFixed(1)),
+                aqi: calculateIndianAqi(cp25, cp10, cpn2, cps2),
+              });
+            }
+
+            const t = hTimes[idx];
+            const p25 = Math.max(hPm25[idx] || rawPm25, 2.0);
+            const p10 = Math.max(hPm10[idx] || p25 * 1.6, 5.0);
+            const pn2 = Math.max(hNo2[idx] || no2, 2.0);
+            const ps2 = Math.max(hSo2[idx] || so2, 1.0);
+
+            const aqiVal = calculateIndianAqi(p25, p10, pn2, ps2);
+            const diffHours = idx - curIdx;
+            const hourPart = t.split("T")[1] ? t.split("T")[1].substring(0, 5) : t;
+            const d = new Date(t);
+            const dayName = isNaN(d.getDay()) ? "" : daysOfWeek[d.getDay()];
+
+            let displayLabel = "";
+            if (diffHours === 0) {
+              displayLabel = `Now (${hourPart})`;
+            } else if (diffHours < 0) {
+              displayLabel = `${hourPart}`;
+            } else if (diffHours <= 24) {
+              displayLabel = `+${diffHours}h (${hourPart})`;
+            } else {
+              displayLabel = `+${diffHours}h (${dayName} ${hourPart})`;
+            }
+
+            sampledSeries.push({
+              time: hourPart,
+              displayTime: displayLabel,
+              fullTime: t,
+              dayName: dayName,
+              diffHours: diffHours,
+              isHistorical: idx <= curIdx,
+              pm25: Number(p25.toFixed(1)),
+              aqi: aqiVal,
+            });
+          }
+
+          sampledSeries.sort((a, b) => a.diffHours - b.diffHours);
 
           resolve({
             liveAqi: indianAqi,
@@ -194,12 +260,12 @@ function fetchLiveOpenMeteoAqi(lat, lon) {
             pm10: Number(pm10.toFixed(1)),
             no2: Number(no2.toFixed(1)),
             so2: Number(so2.toFixed(1)),
-            hourlySeries: hourlySeries,
+            hourlySeries: sampledSeries,
           });
         } catch (e) { resolve(null); }
       });
     });
-    req.setTimeout(1200, () => { req.destroy(); resolve(null); });
+    req.setTimeout(3500, () => { req.destroy(); resolve(null); });
     req.on("error", () => resolve(null));
   });
 }

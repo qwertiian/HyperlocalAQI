@@ -1476,14 +1476,34 @@ function initChart() {
   const historical = [];
   const forecast = [];
 
-  for (let i = -24; i <= 72; i += 3) {
-    labels.push(i <= 0 ? `${i}h` : `+${i}h`);
+  const nowH = new Date().getHours();
+  for (let i = -15; i <= 72; i += 3) {
+    const dHours = i;
+    const h = (nowH + i + 240) % 24;
+    const hStr = `${h.toString().padStart(2, '0')}:00`;
+    let lbl = "";
+    if (i === 0) lbl = `Now (${hStr})`;
+    else if (i < 0) lbl = hStr;
+    else if (i <= 24) lbl = `+${i}h (${hStr})`;
+    else {
+      const dNum = Math.floor(i / 24);
+      lbl = `+${i}h (D+${dNum})`;
+    }
+    labels.push(lbl);
+
+    const baseVal = 140 + Math.sin(((h - 6) * Math.PI) / 12) * 28 + (i > 0 ? (i * 0.15) : 0);
+    const roundVal = Math.max(20, Math.round(baseVal));
+
     if (i <= 0) {
-      historical.push(208 + Math.sin(i / 10) * 20 + Math.random() * 4);
-      forecast.push(null);
+      historical.push(roundVal);
     } else {
       historical.push(null);
-      forecast.push(208 + Math.sin(i / 10) * 30 + i * 0.25);
+    }
+
+    if (i >= 0) {
+      forecast.push(roundVal);
+    } else {
+      forecast.push(null);
     }
   }
 
@@ -1493,32 +1513,59 @@ function initChart() {
       labels: labels,
       datasets: [
         {
-          label: 'Historical AQI',
+          label: 'Historical AQI (Recorded)',
           data: historical,
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.08)',
           borderWidth: 2.5,
           tension: 0.3,
-          fill: true
+          fill: true,
+          pointRadius: 3,
+          pointHoverRadius: 5
         },
         {
-          label: '72h Prophet AI Forecast',
+          label: '72h Prophet AI Forecast (Predicted)',
           data: forecast,
           borderColor: '#8b5cf6',
           borderDash: [4, 4],
           borderWidth: 2.5,
-          tension: 0.3
+          tension: 0.3,
+          pointRadius: 3,
+          pointHoverRadius: 5
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
-        legend: { labels: { color: '#475569', font: { size: 11, weight: '600' } } }
+        legend: { labels: { color: '#475569', font: { size: 11, weight: '600' } } },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          padding: 8,
+          titleFont: { size: 12, weight: 'bold' },
+          bodyFont: { size: 11 },
+          callbacks: {
+            label: function(context) {
+              const val = context.parsed.y;
+              if (val === null || val === undefined) return null;
+              let cat = "Good";
+              if (val > 400) cat = "Severe";
+              else if (val > 300) cat = "Very Poor";
+              else if (val > 200) cat = "Poor";
+              else if (val > 100) cat = "Moderate";
+              else if (val > 50) cat = "Satisfactory";
+              return ` ${context.dataset.label.split(' ')[0]} AQI: ${Math.round(val)} (${cat})`;
+            }
+          }
+        }
       },
       scales: {
-        x: { grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { color: '#64748b' } },
+        x: { grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { color: '#64748b', maxRotation: 45, minRotation: 0 } },
         y: { grid: { color: 'rgba(226, 232, 240, 0.6)' }, ticks: { color: '#64748b' } }
       }
     }
@@ -1528,9 +1575,20 @@ function initChart() {
 function updateChartWithRealData(hourlySeries, currentAqi) {
   if (!forecastChart) return;
   if (hourlySeries && hourlySeries.length) {
-    const labels = hourlySeries.map(d => d.time);
-    const historical = hourlySeries.map((d, i) => i < 12 ? d.aqi : null);
-    const forecast = hourlySeries.map((d, i) => i >= 11 ? d.aqi : null);
+    const labels = hourlySeries.map(d => d.displayTime || d.time);
+    
+    // Find index of current instant
+    let nowIdx = -1;
+    for (let i = hourlySeries.length - 1; i >= 0; i--) {
+      if (hourlySeries[i].isHistorical || hourlySeries[i].diffHours <= 0) {
+        nowIdx = i;
+        break;
+      }
+    }
+    if (nowIdx === -1) nowIdx = 0;
+
+    const historical = hourlySeries.map((d, i) => i <= nowIdx ? d.aqi : null);
+    const forecast = hourlySeries.map((d, i) => i >= nowIdx ? d.aqi : null);
 
     forecastChart.data.labels = labels;
     forecastChart.data.datasets[0].data = historical;
@@ -1541,19 +1599,40 @@ function updateChartWithRealData(hourlySeries, currentAqi) {
     const historical = [];
     const forecast = [];
     const nowH = new Date().getHours();
-    for (let i = -12; i <= 12; i += 2) {
-      const h = (nowH + i + 24) % 24;
-      labels.push(`${h.toString().padStart(2, '0')}:00`);
-      const factor = 1.0 + 0.22 * Math.sin(((h - 6) * Math.PI) / 12);
-      const val = Math.max(15, Math.round(currentAqi * factor));
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const nowDayIdx = new Date().getDay();
+
+    for (let i = -15; i <= 72; i += 3) {
+      const h = (nowH + i + 240) % 24;
+      const hStr = `${h.toString().padStart(2, '0')}:00`;
+      const addedDays = Math.floor((nowH + i) / 24);
+      const targetDay = days[(nowDayIdx + (addedDays % 7) + 7) % 7];
+
+      let lbl = "";
+      if (i === 0) lbl = `Now (${hStr})`;
+      else if (i < 0) lbl = hStr;
+      else if (i <= 24) lbl = `+${i}h (${hStr})`;
+      else lbl = `+${i}h (${targetDay} ${hStr})`;
+
+      labels.push(lbl);
+
+      // Realistic diurnal traffic & inversion variation
+      const trafficFactor = (h >= 8 && h <= 10) || (h >= 19 && h <= 22) ? 1.22 : (h >= 13 && h <= 16 ? 0.88 : 1.0);
+      const val = Math.max(15, Math.round(currentAqi * trafficFactor));
+
       if (i <= 0) {
         historical.push(val);
-        forecast.push(null);
       } else {
         historical.push(null);
+      }
+
+      if (i >= 0) {
         forecast.push(val);
+      } else {
+        forecast.push(null);
       }
     }
+
     forecastChart.data.labels = labels;
     forecastChart.data.datasets[0].data = historical;
     forecastChart.data.datasets[1].data = forecast;
@@ -1566,11 +1645,18 @@ async function loadForecastChart(stationId) {
     const res = await fetch(`${API_BASE}/forecast/${stationId}`);
     const data = await res.json();
     if (data && data.length) {
-      const labels = data.map((d, i) => `+${i * 3}h`);
-      const values = data.map(d => d.yhat);
+      const labels = data.map((d, i) => `+${(i + 1) * 3}h`);
+      const values = data.map(d => Math.round(d.yhat || d.yhat_upper || 100));
 
-      forecastChart.data.labels = labels;
-      forecastChart.data.datasets[1].data = values;
+      // Connect from current active AQI if available
+      const currentVal = Number(document.getElementById("activeAqiVal").textContent) || values[0];
+      const allLabels = ["Now", ...labels];
+      const historical = [currentVal, ...labels.map(() => null)];
+      const forecast = [currentVal, ...values];
+
+      forecastChart.data.labels = allLabels;
+      forecastChart.data.datasets[0].data = historical;
+      forecastChart.data.datasets[1].data = forecast;
       forecastChart.update();
     }
   } catch (e) {
