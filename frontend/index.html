@@ -1293,6 +1293,52 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function switchTab(btn, tabId) {
+  // 1. Update tab navigation button styles
+  const allTabBtns = document.querySelectorAll(".tab-nav .tab-btn");
+  allTabBtns.forEach(b => b.classList.remove("active"));
+  if (btn) {
+    btn.classList.add("active");
+  } else {
+    // If called programmatically by tabId
+    const tabIndexMap = { 'tab-forecast': 0, 'tab-copilot': 1, 'tab-egov': 2 };
+    const idx = tabIndexMap[tabId];
+    if (idx !== undefined && allTabBtns[idx]) allTabBtns[idx].classList.add("active");
+  }
+
+  // 2. Switch visible tab content panels
+  document.querySelectorAll(".tab-content").forEach(content => {
+    content.classList.remove("active");
+  });
+  const target = document.getElementById(tabId);
+  if (target) {
+    target.classList.add("active");
+  }
+
+  // 3. Contextual Tab Enhancements
+  if (tabId === "tab-copilot") {
+    // Sync current location AQI into AI Health Advisor form
+    const aqiInput = document.getElementById("aqiInput");
+    const activeVal = document.getElementById("activeAqiVal");
+    const activeCity = document.getElementById("activeCityTag");
+    const copilotTag = document.getElementById("copilotLocationTag");
+    if (aqiInput && activeVal) {
+      const parsedAqi = parseInt(activeVal.textContent, 10);
+      if (!isNaN(parsedAqi) && parsedAqi > 0) {
+        aqiInput.value = parsedAqi;
+      }
+    }
+    if (activeCity && copilotTag) {
+      copilotTag.textContent = activeCity.textContent || "Active Location";
+    }
+  } else if (tabId === "tab-forecast") {
+    // Resize chart to ensure smooth canvas layout after tab visibility change
+    if (forecastChart) {
+      setTimeout(() => forecastChart.resize(), 50);
+    }
+  }
+}
+
 // ━━━ Active Location Display State & Dual-Metric Controller ━━━
 let currentActiveLocationData = null;
 let currentAqiMode = "day"; // "day" (24-hour average) | "spot" (point microclimate)
