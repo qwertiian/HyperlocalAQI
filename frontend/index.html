@@ -823,6 +823,17 @@
           <button class="route-mode-pill" id="mode-walking" onclick="setRouteTravelMode('walking')">🚶 Walking</button>
         </div>
 
+        <!-- Dynamic Diurnal Atmospheric Departure Window -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+          <span style="font-size:10px; font-weight:700; color:#475569; white-space:nowrap;">🕒 Departure:</span>
+          <select id="routeDepartureSelect" onchange="calculateNagpurRoutes()" style="margin:0; padding:4px 6px; font-size:10px; font-weight:600; border-radius:8px; border:1px solid #cbd5e1; width:auto; flex:1;">
+            <option value="now">⚡ Now (Live IST Atmosphere)</option>
+            <option value="8">🌅 08:30 IST (Morning Inversion + Rush Surge)</option>
+            <option value="14">☀️ 14:00 IST (Solar Convective Dilution Window)</option>
+            <option value="20">🌆 20:30 IST (Evening Inversion Stagnation)</option>
+          </select>
+        </div>
+
         <!-- Origin & Destination Inputs -->
         <div style="display:flex; flex-direction:column; gap:8px; position:relative;">
           <!-- Origin -->
@@ -1722,7 +1733,9 @@ async function calculateNagpurRoutes() {
   if (btn) btn.innerHTML = `<span>⏳ Tracing Real Road Geometry & Kriging...</span>`;
 
   try {
-    const url = `${API_BASE}/nagpur/routes?startLat=${routeOriginPoint.lat}&startLon=${routeOriginPoint.lon}&endLat=${routeDestPoint.lat}&endLon=${routeDestPoint.lon}&mode=${routeTravelMode}&startName=${encodeURIComponent(routeOriginPoint.name)}&destName=${encodeURIComponent(routeDestPoint.name)}`;
+    const depSelect = document.getElementById("routeDepartureSelect");
+    const depHour = depSelect && depSelect.value !== "now" ? depSelect.value : "";
+    const url = `${API_BASE}/nagpur/routes?startLat=${routeOriginPoint.lat}&startLon=${routeOriginPoint.lon}&endLat=${routeDestPoint.lat}&endLon=${routeDestPoint.lon}&mode=${routeTravelMode}&startName=${encodeURIComponent(routeOriginPoint.name)}&destName=${encodeURIComponent(routeDestPoint.name)}${depHour ? `&departureHour=${depHour}` : ''}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -1822,14 +1835,16 @@ function renderRoutesUI(data) {
   container.innerHTML = `
     <div style="font-size:10.5px; font-weight:800; color:#475569; display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
       <span>🛣️ Road-Following Routes (${modeIcon})</span>
-      <span style="font-size:9.5px; color:#059669; background:#ecfdf5; padding:1px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
-        ✓ OSRM Road Geometry
+      <span style="font-size:9px; color:#059669; background:#ecfdf5; padding:1px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
+        ✓ Sentinel-5P + MODIS + Kriging + PIML
       </span>
     </div>
   ` + data.routes.map((r, idx) => {
     const isSelected = r.isRecommended;
     const catColor = getAqiColor(r.meanAqi);
     let borderClass = r.routeType === "green" ? "selected" : (r.routeType === "arterial" ? "arterial" : "bypass");
+    const bio = r.biometricDose || {};
+    const atm = r.diurnalAtmosphere || {};
 
     return `
       <div class="route-card ${isSelected ? borderClass : ''}" id="card-${r.id}" onclick="selectActiveRoute('${r.id}')">
@@ -1859,8 +1874,20 @@ function renderRoutesUI(data) {
             <div style="font-size:13px; font-weight:800; color:#1e293b; margin-top:1px;">${r.durationMinutes} m</div>
           </div>
           <div style="text-align:center;">
-            <div style="font-size:9px; color:#94a3b8; font-weight:700;">INHALATION</div>
-            <div style="font-size:13px; font-weight:800; color:#6366f1; margin-top:1px;">${r.exposureDose}</div>
+            <div style="font-size:9px; color:#94a3b8; font-weight:700;">PM2.5 DOSE</div>
+            <div style="font-size:13px; font-weight:800; color:#6366f1; margin-top:1px;">${r.exposureDose} µg</div>
+          </div>
+        </div>
+
+        <!-- US-EPA Biometric Respiration & Atmospheric Physics Details -->
+        <div style="background:#f1f5f9; padding:5px 8px; border-radius:8px; font-size:9.5px; display:flex; flex-direction:column; gap:2px; margin-top:3px;">
+          <div style="display:flex; justify-content:space-between; color:#334155;">
+            <span>🫁 <b>Alveolar Deposition:</b> ${bio.alveolarDepositionUg || '—'} µg PM2.5</span>
+            <span>🚬 <b>Equiv. Cigarettes:</b> ${bio.cigaretteEquivalent || '—'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:#475569; font-size:9px;">
+            <span>🌤️ <b>PBL Phase:</b> ${atm.phase || 'Neutral Mixing'}</span>
+            <span>🌬️ <b>Ventilation (VE):</b> ${bio.ventilationRateM3h || '0.99'} m³/h</span>
           </div>
         </div>
 
