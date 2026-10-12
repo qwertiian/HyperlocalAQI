@@ -504,6 +504,136 @@
     width: 100%;
   }
 
+  /* Google Maps-Style Nagpur Green Route Navigation Drawer */
+  .route-planner-drawer {
+    position: absolute;
+    top: 72px;
+    left: 20px;
+    width: 420px;
+    max-width: calc(100% - 40px);
+    max-height: calc(100% - 95px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.15);
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: drawerFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes drawerFadeIn {
+    from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .route-drawer-header {
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(236, 253, 245, 0.96), rgba(240, 253, 250, 0.96));
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .route-drawer-body {
+    padding: 14px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .route-input-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+  }
+  .route-input-box:focus-within {
+    border-color: #10b981;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+  .route-input-box select, .route-input-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    width: 100%;
+    font-family: inherit;
+  }
+  .route-mode-pill {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid #cbd5e1;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #475569;
+  }
+  .route-mode-pill.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  }
+  .route-preset-chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 14px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .route-preset-chip:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+  }
+  .route-card {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .route-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  }
+  .route-card.selected {
+    border-color: #10b981;
+    background: #f0fdf4;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+  }
+  .route-card.selected.arterial {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.18);
+  }
+  .route-card.selected.bypass {
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.18);
+  }
+
   /* Responsive Mobile & Tablet Layout System */
   @media (max-width: 1024px) {
     body {
@@ -620,6 +750,7 @@
   <div class="nav-pills">
     <button class="nav-pill-btn active">🌐 All-India Coverage</button>
     <button class="nav-pill-btn" onclick="flyToCity(21.1458, 79.0882, 'Nagpur')">📍 Nagpur Base</button>
+    <button class="nav-pill-btn" id="btnNagpurGreenNav" onclick="toggleNagpurRouteDrawer()" style="background:linear-gradient(135deg, #059669, #10b981); color:white; border:none; font-weight:700; box-shadow:0 4px 12px rgba(16,185,129,0.35);">🌿 Nagpur Green Route</button>
   </div>
   <div class="status-badge">
     <div class="pulse-dot"></div>
@@ -648,6 +779,9 @@
       <span>📍 Click ANY spot on the map in India for real-time spatial AQI interpolation</span>
     </div>
     <div style="position:absolute; top:16px; right:16px; z-index:1000; display:flex; align-items:center; gap:8px;">
+      <button class="map-overlay-btn" id="btnMapRouteToggle" onclick="toggleNagpurRouteDrawer()" title="Nagpur Green Safe Route Navigator" style="background: linear-gradient(135deg, #059669, #10b981); color:white; border: 1px solid rgba(16, 185, 129, 0.8); padding:6px 14px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(5, 150, 105, 0.35); transition:all 0.25s ease;">
+        🌿 Green Safe Route
+      </button>
       <button class="map-overlay-btn" id="btnToggleIndustrial" onclick="toggleIndustrialLayer()" title="Toggle 826 GEM Industrial Point Sources" style="background:rgba(15,23,42,0.85); color:white; border:1px solid rgba(59,130,246,0.6); padding:6px 14px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2); transition:all 0.25s ease;">
         🏭 Industrial Sources (826)
       </button>
@@ -655,6 +789,97 @@
         🔥 NASA Stubble Fires
       </button>
     </div>
+
+    <!-- Google Maps-style Nagpur Green Route Navigation Drawer -->
+    <div class="route-planner-drawer" id="nagpurRouteDrawer">
+      <div class="route-drawer-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🌿</span>
+          <div>
+            <div style="font-size:13px; font-weight:800; color:#065f46;">Nagpur Clean Navigation Engine</div>
+            <div style="font-size:10px; font-weight:600; color:#047857;">Exposure-Weighted Spatial Kriging Router</div>
+          </div>
+        </div>
+        <button onclick="toggleNagpurRouteDrawer(false)" style="background:none; border:none; font-size:18px; color:#64748b; cursor:pointer; padding:4px 8px; border-radius:8px;">✕</button>
+      </div>
+
+      <div class="route-drawer-body">
+        <!-- Quick Preset Corridor Shortcuts -->
+        <div>
+          <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8; margin-bottom:5px;">⚡ Popular Nagpur Corridors (1-Click)</div>
+          <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px;" class="hide-scrollbar">
+            <button class="route-preset-chip" onclick="setPresetRoute('rcoem', 'sitabuldi')">🎓 RCOEM ➔ Sitabuldi</button>
+            <button class="route-preset-chip" onclick="setPresetRoute('airport', 'sadar')">🛫 Airport ➔ Sadar</button>
+            <button class="route-preset-chip" onclick="setPresetRoute('ambazari', 'civil_lines')">🌊 Ambazari ➔ Civil Lines</button>
+            <button class="route-preset-chip" onclick="setPresetRoute('dharampeth', 'mihan')">🏢 Dharampeth ➔ MIHAN</button>
+            <button class="route-preset-chip" onclick="setPresetRoute('mankapur', 'medical')">🏥 Mankapur ➔ Medical</button>
+          </div>
+        </div>
+
+        <!-- Mode of Travel -->
+        <div style="display:flex; gap:8px;">
+          <button class="route-mode-pill active" id="mode-driving" onclick="setRouteTravelMode('driving')">🚗 Driving</button>
+          <button class="route-mode-pill" id="mode-cycling" onclick="setRouteTravelMode('cycling')">🚴 Cycling</button>
+          <button class="route-mode-pill" id="mode-walking" onclick="setRouteTravelMode('walking')">🚶 Walking</button>
+        </div>
+
+        <!-- Origin & Destination Inputs -->
+        <div style="display:flex; flex-direction:column; gap:8px; position:relative;">
+          <!-- Origin -->
+          <div>
+            <div style="font-size:10.5px; font-weight:700; color:#475569; margin-bottom:3px; display:flex; justify-content:space-between;">
+              <span>🟢 Starting Location (A)</span>
+              <span style="display:flex; gap:6px;">
+                <a href="javascript:void(0)" onclick="useMyLocationForRoute()" style="color:#059669; font-weight:700; text-decoration:none;">📍 My GPS</a>
+                <span style="color:#cbd5e1;">|</span>
+                <a href="javascript:void(0)" id="btnPickOrigin" onclick="toggleMapPickMode('origin')" style="color:#3b82f6; font-weight:700; text-decoration:none;">🎯 Pick on Map</a>
+              </span>
+            </div>
+            <div class="route-input-box">
+              <span style="color:#10b981; font-weight:800; font-size:13px;">A</span>
+              <select id="routeOriginSelect" onchange="onRouteChange()">
+                <option value="">Select origin landmark or click on map...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Swap Button -->
+          <div style="display:flex; justify-content:center; margin:-4px 0;">
+            <button onclick="swapRouteEndpoints()" title="Swap Origin and Destination" style="background:#f1f5f9; border:1px solid #e2e8f0; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; color:#475569; transition:all 0.15s ease;">⇅</button>
+          </div>
+
+          <!-- Destination -->
+          <div>
+            <div style="font-size:10.5px; font-weight:700; color:#475569; margin-bottom:3px; display:flex; justify-content:space-between;">
+              <span>🔴 Destination Point (B)</span>
+              <a href="javascript:void(0)" id="btnPickDest" onclick="toggleMapPickMode('dest')" style="color:#ef4444; font-weight:700; text-decoration:none;">🎯 Pick on Map</a>
+            </div>
+            <div class="route-input-box">
+              <span style="color:#ef4444; font-weight:800; font-size:13px;">B</span>
+              <select id="routeDestSelect" onchange="onRouteChange()">
+                <option value="">Select destination landmark or click on map...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculate Button -->
+        <button id="btnFindRoutes" onclick="calculateNagpurRoutes()" style="background:linear-gradient(135deg, #059669, #10b981); color:white; border:none; padding:11px; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s ease;">
+          <span>🌱 Calculate Cleanest & Safe Routes</span>
+        </button>
+
+        <!-- Route Results Container -->
+        <div id="routeResultsContainer" style="display:none; flex-direction:column; gap:10px; margin-top:4px;">
+          <!-- Route Cards inserted dynamically -->
+        </div>
+
+        <!-- Clear Route Button -->
+        <button id="btnClearRoute" onclick="clearNagpurRoutes()" style="display:none; background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; padding:8px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer;">
+          ✕ Clear Route from Map
+        </button>
+      </div>
+    </div>
+
     <div id="map"></div>
   </div>
 
@@ -685,6 +910,14 @@
             <div style="font-weight:700;" id="nearestStationName">Fetching nearest...</div>
             <div style="color:var(--text-muted); font-size:11px;" id="nearestStationDist">— km away</div>
           </div>
+        </div>
+        <div style="margin-top:8px; border-top:1px solid rgba(226,232,240,0.8); padding-top:6px; display:flex; justify-content:space-between; align-items:center;">
+          <span id="krigingMethodBadge" style="font-size:10px; font-weight:700; color:#059669; background:#ecfdf5; padding:2px 7px; border-radius:6px; border:1px solid rgba(16,185,129,0.3);">
+            📍 Ordinary Kriging (Spherical Variogram)
+          </span>
+          <span id="krigingConfidenceBadge" style="font-size:10px; font-weight:700; color:#64748b;">
+            Confidence σ: ±4.2
+          </span>
         </div>
       </div>
 
@@ -994,32 +1227,398 @@ const API_BASE = (window.location.hostname === "localhost" || window.location.ho
 let map, forecastChart, clickPinMarker;
 let allCitiesList = [];
 
-function getAqiColor(v) {
-  // CPCB Indian AQI color scale — visually distinct for all 6 categories
-  if (v <= 50)  return "#059669";  // Good         — DARK emerald green
-  if (v <= 100) return "#84cc16";  // Satisfactory — BRIGHT lime green (clearly lighter)
-  if (v <= 200) return "#f59e0b";  // Moderate     — AMBER yellow
-  if (v <= 300) return "#ea580c";  // Poor         — DEEP orange
-  if (v <= 400) return "#dc2626";  // Very Poor    — BRIGHT red
-  return "#7c1d1d";                // Severe       — DARK crimson/maroon
+// ━━━ Nagpur Green Navigation Routing State ━━━
+let routeTravelMode = "driving";
+let routeOriginPoint = null;
+let routeDestPoint = null;
+let routePickMode = null; // 'origin' | 'dest' | null
+let routePolylines = [];
+let routeMarkers = [];
+let calculatedRoutesData = null;
+let nagpurLandmarksList = [];
+
+function toggleNagpurRouteDrawer(forceState) {
+  const drawer = document.getElementById("nagpurRouteDrawer");
+  if (!drawer) return;
+  const isHidden = (drawer.style.display === "none" || !drawer.style.display);
+  const show = forceState !== undefined ? forceState : isHidden;
+  drawer.style.display = show ? "flex" : "none";
+  if (show) {
+    flyToCity(21.1458, 79.0882, "Nagpur Base");
+    if (nagpurLandmarksList.length === 0) loadNagpurLandmarks();
+  } else {
+    routePickMode = null;
+  }
 }
 
-function switchTab(btn, tabId) {
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-  
+async function loadNagpurLandmarks() {
+  try {
+    const res = await fetch(`${API_BASE}/nagpur/landmarks`);
+    const data = await res.json();
+    nagpurLandmarksList = data.landmarks || [];
+
+    const oSel = document.getElementById("routeOriginSelect");
+    const dSel = document.getElementById("routeDestSelect");
+    if (oSel && dSel) {
+      oSel.innerHTML = '<option value="">Select origin landmark or click on map...</option>';
+      dSel.innerHTML = '<option value="">Select destination landmark or click on map...</option>';
+
+      nagpurLandmarksList.forEach(lm => {
+        const oOpt = document.createElement("option");
+        oOpt.value = lm.id;
+        oOpt.textContent = `📍 ${lm.name} (${lm.area})`;
+        oSel.appendChild(oOpt);
+
+        const dOpt = document.createElement("option");
+        dOpt.value = lm.id;
+        dOpt.textContent = `📍 ${lm.name} (${lm.area})`;
+        dSel.appendChild(dOpt);
+      });
+
+      // Default initial selection: RCOEM -> Sitabuldi
+      oSel.value = "rcoem";
+      dSel.value = "sitabuldi";
+      onRouteChange();
+    }
+  } catch(e) {
+    console.error("Could not load Nagpur landmarks", e);
+  }
+}
+
+function setRouteTravelMode(mode) {
+  routeTravelMode = mode;
+  document.querySelectorAll(".route-mode-pill").forEach(p => p.classList.remove("active"));
+  const btn = document.getElementById(`mode-${mode}`);
   if (btn) btn.classList.add("active");
-  const target = document.getElementById(tabId);
-  if (target) target.classList.add("active");
+  if (routeOriginPoint && routeDestPoint) calculateNagpurRoutes();
 }
 
-function selectPersona(ageGroup, isAsthma, isPregnant) {
-  document.querySelectorAll(".persona-btn").forEach(b => b.classList.remove("active"));
-  event.currentTarget.classList.add("active");
-  
-  window.selectedAge = ageGroup;
-  window.selectedAsthma = isAsthma;
-  window.selectedPregnant = isPregnant;
+function setPresetRoute(originId, destId) {
+  const oSel = document.getElementById("routeOriginSelect");
+  const dSel = document.getElementById("routeDestSelect");
+  if (oSel && dSel) {
+    oSel.value = originId;
+    dSel.value = destId;
+    onRouteChange();
+    calculateNagpurRoutes();
+  }
+}
+
+function swapRouteEndpoints() {
+  const oSel = document.getElementById("routeOriginSelect");
+  const dSel = document.getElementById("routeDestSelect");
+  if (!oSel || !dSel) return;
+  const tempVal = oSel.value;
+  oSel.value = dSel.value;
+  dSel.value = tempVal;
+
+  const tempPt = routeOriginPoint;
+  routeOriginPoint = routeDestPoint;
+  routeDestPoint = tempPt;
+
+  onRouteChange();
+  if (routeOriginPoint && routeDestPoint) calculateNagpurRoutes();
+}
+
+function onRouteChange() {
+  const oVal = document.getElementById("routeOriginSelect").value;
+  const dVal = document.getElementById("routeDestSelect").value;
+
+  if (oVal && nagpurLandmarksList.length) {
+    const lm = nagpurLandmarksList.find(l => l.id === oVal);
+    if (lm) routeOriginPoint = { lat: lm.lat, lon: lm.lon, name: lm.name };
+  }
+  if (dVal && nagpurLandmarksList.length) {
+    const lm = nagpurLandmarksList.find(l => l.id === dVal);
+    if (lm) routeDestPoint = { lat: lm.lat, lon: lm.lon, name: lm.name };
+  }
+}
+
+function useMyLocationForRoute() {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+  const btn = document.getElementById("btnPickOrigin");
+  if (btn) btn.textContent = "Locating GPS...";
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+      const d = haversineDistance(lat, lon, 21.1458, 79.0882);
+      let note = "My Current Location";
+      if (d > 75) {
+        lat = 21.1458;
+        lon = 79.0882;
+        note = "My Location (Calibrated to Nagpur)";
+      }
+      setRouteOriginCoord(lat, lon, note);
+      if (btn) btn.textContent = "🎯 Pick on Map";
+    },
+    (err) => {
+      setRouteOriginCoord(21.1458, 79.0882, "Nagpur Center (GPS Fallback)");
+      if (btn) btn.textContent = "🎯 Pick on Map";
+    },
+    { timeout: 5000, enableHighAccuracy: true }
+  );
+}
+
+function toggleMapPickMode(mode) {
+  if (routePickMode === mode) {
+    routePickMode = null;
+    document.getElementById("btnPickOrigin").style.color = "#3b82f6";
+    document.getElementById("btnPickDest").style.color = "#ef4444";
+    return;
+  }
+  routePickMode = mode;
+  if (mode === "origin") {
+    document.getElementById("btnPickOrigin").style.color = "#10b981";
+    document.getElementById("btnPickDest").style.color = "#ef4444";
+    alert("📍 Click anywhere on the map to set Starting Location (A)");
+  } else {
+    document.getElementById("btnPickOrigin").style.color = "#3b82f6";
+    document.getElementById("btnPickDest").style.color = "#10b981";
+    alert("🎯 Click anywhere on the map to set Destination Point (B)");
+  }
+}
+
+function setRouteOriginCoord(lat, lon, customName) {
+  const name = customName || `Custom Point (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+  routeOriginPoint = { lat, lon, name };
+  const oSel = document.getElementById("routeOriginSelect");
+  if (oSel) {
+    let customOpt = oSel.querySelector('option[data-custom="true"]');
+    if (!customOpt) {
+      customOpt = document.createElement("option");
+      customOpt.setAttribute("data-custom", "true");
+      oSel.prepend(customOpt);
+    }
+    customOpt.value = "custom";
+    customOpt.textContent = `📍 ${name}`;
+    oSel.value = "custom";
+  }
+  routePickMode = null;
+  document.getElementById("btnPickOrigin").style.color = "#3b82f6";
+}
+
+function setRouteDestCoord(lat, lon, customName) {
+  const name = customName || `Custom Point (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+  routeDestPoint = { lat, lon, name };
+  const dSel = document.getElementById("routeDestSelect");
+  if (dSel) {
+    let customOpt = dSel.querySelector('option[data-custom="true"]');
+    if (!customOpt) {
+      customOpt = document.createElement("option");
+      customOpt.setAttribute("data-custom", "true");
+      dSel.prepend(customOpt);
+    }
+    customOpt.value = "custom";
+    customOpt.textContent = `📍 ${name}`;
+    dSel.value = "custom";
+  }
+  routePickMode = null;
+  document.getElementById("btnPickDest").style.color = "#ef4444";
+}
+
+async function calculateNagpurRoutes() {
+  if (!routeOriginPoint || !routeDestPoint) {
+    onRouteChange();
+  }
+  if (!routeOriginPoint || !routeDestPoint) {
+    alert("Please select both a starting location and destination in Nagpur.");
+    return;
+  }
+
+  const btn = document.getElementById("btnFindRoutes");
+  if (btn) btn.innerHTML = `<span>⏳ Optimizing Clean Paths via Ordinary Kriging...</span>`;
+
+  try {
+    const url = `${API_BASE}/nagpur/routes?startLat=${routeOriginPoint.lat}&startLon=${routeOriginPoint.lon}&endLat=${routeDestPoint.lat}&endLon=${routeDestPoint.lon}&mode=${routeTravelMode}&startName=${encodeURIComponent(routeOriginPoint.name)}&destName=${encodeURIComponent(routeDestPoint.name)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+      if (btn) btn.innerHTML = `<span>🌱 Calculate Cleanest & Safe Routes</span>`;
+      return;
+    }
+
+    calculatedRoutesData = data;
+    renderRoutesUI(data);
+    renderRoutesOnMap(data);
+    if (btn) btn.innerHTML = `<span>🌱 Recalculate Routes</span>`;
+  } catch(e) {
+    console.error("Route calculation error", e);
+    alert("Route calculation failed: " + e.message);
+    if (btn) btn.innerHTML = `<span>🌱 Calculate Cleanest & Safe Routes</span>`;
+  }
+}
+
+function renderRoutesUI(data) {
+  const container = document.getElementById("routeResultsContainer");
+  const clearBtn = document.getElementById("btnClearRoute");
+  if (!container) return;
+  container.style.display = "flex";
+  if (clearBtn) clearBtn.style.display = "block";
+
+  container.innerHTML = data.routes.map((r, idx) => {
+    const isSelected = r.isRecommended;
+    const catColor = getAqiColor(r.meanAqi);
+    let borderClass = r.routeType === "green" ? "selected" : (r.routeType === "arterial" ? "arterial" : "bypass");
+
+    return `
+      <div class="route-card ${isSelected ? borderClass : ''}" id="card-${r.id}" onclick="selectActiveRoute('${r.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:800; color:#1e293b;">${r.name}</span>
+            </div>
+            <div style="font-size:10px; color:#64748b; margin-top:2px;">${r.summary}</div>
+          </div>
+          <span style="font-size:9.5px; font-weight:800; background:${r.isRecommended ? '#10b981' : (r.routeType === 'arterial' ? '#f59e0b' : '#ef4444')}; color:white; padding:2px 8px; border-radius:10px; white-space:nowrap;">
+            ${r.highlightBadge}
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; background:#f8fafc; padding:8px; border-radius:10px; margin-top:4px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px; color:#94a3b8; font-weight:700;">AVG AQI</div>
+            <div style="font-size:15px; font-weight:800; color:${catColor};">${r.meanAqi}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; color:#94a3b8; font-weight:700;">DISTANCE</div>
+            <div style="font-size:13px; font-weight:800; color:#1e293b; margin-top:1px;">${r.distanceKm} km</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; color:#94a3b8; font-weight:700;">EST. TIME</div>
+            <div style="font-size:13px; font-weight:800; color:#1e293b; margin-top:1px;">${r.durationMinutes} m</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; color:#94a3b8; font-weight:700;">INHALATION</div>
+            <div style="font-size:13px; font-weight:800; color:#6366f1; margin-top:1px;">${r.exposureDose}</div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; margin-top:2px; color:#475569;">
+          <span>🍃 Cleanest: <b>${r.cleanestSegment}</b></span>
+          <span>⚠️ Peak: <b>${r.peakHotspot}</b></span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderRoutesOnMap(data) {
+  clearNagpurRoutes(false);
+
+  const bounds = L.latLngBounds([]);
+
+  const iconA = L.divIcon({
+    className: "custom-pin",
+    html: `<div style="background:#059669; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; box-shadow:0 3px 10px rgba(5,150,105,0.4); border:2.5px solid white;">A</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+  const markerA = L.marker([data.start.lat, data.start.lon], { icon: iconA }).addTo(map)
+    .bindPopup(`<b>🟢 Starting Point (A)</b><br/>${data.start.name}`);
+  routeMarkers.push(markerA);
+  bounds.extend([data.start.lat, data.start.lon]);
+
+  const iconB = L.divIcon({
+    className: "custom-pin",
+    html: `<div style="background:#dc2626; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; box-shadow:0 3px 10px rgba(220,38,38,0.4); border:2.5px solid white;">B</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+  const markerB = L.marker([data.destination.lat, data.destination.lon], { icon: iconB }).addTo(map)
+    .bindPopup(`<b>🔴 Destination (B)</b><br/>${data.destination.name}`);
+  routeMarkers.push(markerB);
+  bounds.extend([data.destination.lat, data.destination.lon]);
+
+  data.routes.forEach(r => {
+    const isGreen = r.routeType === "green";
+    const lineStyle = isGreen ? {
+      color: "#10b981",
+      weight: 6.5,
+      opacity: 0.95,
+      lineCap: "round",
+      lineJoin: "round"
+    } : (r.routeType === "arterial" ? {
+      color: "#f59e0b",
+      weight: 4.5,
+      opacity: 0.75,
+      dashArray: "6, 8"
+    } : {
+      color: "#ef4444",
+      weight: 4.5,
+      opacity: 0.75,
+      dashArray: "4, 6"
+    });
+
+    const poly = L.polyline(r.path, lineStyle).addTo(map);
+    poly.bindPopup(`
+      <div style="padding:4px; min-width:180px;">
+        <div style="font-size:12px; font-weight:800; color:${lineStyle.color};">${r.name}</div>
+        <div style="font-size:18px; font-weight:800; color:${getAqiColor(r.meanAqi)}; margin-top:2px;">
+          ${r.meanAqi} AQI <span style="font-size:11px; font-weight:600;">(${r.category})</span>
+        </div>
+        <div style="font-size:10.5px; color:#64748b; margin-top:3px;">
+          📏 ${r.distanceKm} km · ⏱️ ${r.durationMinutes} mins · 🫁 Inhaled Dose: ${r.exposureDose}
+        </div>
+        <div style="font-size:10px; color:#059669; font-weight:700; margin-top:4px;">
+          ${r.highlightBadge}
+        </div>
+      </div>
+    `);
+
+    poly.on("click", () => selectActiveRoute(r.id));
+    poly.routeId = r.id;
+    routePolylines.push(poly);
+
+    r.path.forEach(pt => bounds.extend(pt));
+  });
+
+  map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+}
+
+function selectActiveRoute(routeId) {
+  if (!calculatedRoutesData) return;
+  document.querySelectorAll(".route-card").forEach(c => {
+    c.classList.remove("selected", "arterial", "bypass");
+  });
+
+  const card = document.getElementById(`card-${routeId}`);
+  const routeObj = calculatedRoutesData.routes.find(r => r.id === routeId);
+  if (card && routeObj) {
+    const cls = routeObj.routeType === "green" ? "selected" : (routeObj.routeType === "arterial" ? "arterial" : "bypass");
+    card.classList.add("selected", cls);
+  }
+
+  routePolylines.forEach(p => {
+    if (p.routeId === routeId) {
+      p.setStyle({ weight: 7.5, opacity: 1.0 });
+      p.bringToFront();
+    } else {
+      p.setStyle({ weight: 3.5, opacity: 0.45 });
+    }
+  });
+}
+
+function clearNagpurRoutes(clearUI = true) {
+  routePolylines.forEach(p => map.removeLayer(p));
+  routePolylines = [];
+  routeMarkers.forEach(m => map.removeLayer(m));
+  routeMarkers = [];
+
+  if (clearUI) {
+    const container = document.getElementById("routeResultsContainer");
+    const clearBtn = document.getElementById("btnClearRoute");
+    if (container) container.style.display = "none";
+    if (clearBtn) clearBtn.style.display = "none";
+    const btn = document.getElementById("btnFindRoutes");
+    if (btn) btn.innerHTML = `<span>🌱 Calculate Cleanest & Safe Routes</span>`;
+  }
 }
 
 function initMap() {
@@ -1032,7 +1631,6 @@ function initMap() {
     maxZoom: 18,
   }).addTo(map);
 
-  // Invalidate Leaflet canvas size on load, window resize, and layout changes for 100% mobile compatibility
   setTimeout(() => { if (map) map.invalidateSize(); }, 200);
   setTimeout(() => { if (map) map.invalidateSize(); }, 800);
 
@@ -1041,18 +1639,29 @@ function initMap() {
     setTimeout(() => { if (map) map.invalidateSize(); }, 300);
   });
 
-  // Click-Anywhere-on-Map Nationwide Tracking
+  // Preload Nagpur landmarks for routing
+  loadNagpurLandmarks();
+
+  // Click-Anywhere-on-Map Nationwide Tracking & Route Point Picking
   map.on("click", async (e) => {
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
 
+    if (routePickMode === 'origin') {
+      setRouteOriginCoord(lat, lon);
+      return;
+    }
+    if (routePickMode === 'dest') {
+      setRouteDestCoord(lat, lon);
+      return;
+    }
+
     if (clickPinMarker) map.removeLayer(clickPinMarker);
 
     clickPinMarker = L.marker([lat, lon]).addTo(map)
-      .bindPopup(`📍 Querying AQI at (${lat.toFixed(3)}, ${lon.toFixed(3)})...`, { autoClose: false, closeOnClick: false })
+      .bindPopup(`📍 Querying Ordinary Kriging AQI at (${lat.toFixed(3)}, ${lon.toFixed(3)})...`, { autoClose: false, closeOnClick: false })
       .openPopup();
 
-    // Instant panel feedback on click
     document.getElementById("activeCityTag").textContent = `Point (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
     document.getElementById("nearestStationName").textContent = "Locating nearest sensor...";
     document.getElementById("nearestStationDist").textContent = "calculating...";
@@ -1065,7 +1674,7 @@ function initMap() {
     document.getElementById("barIndustrial").style.width = `${cI}%`;
     document.getElementById("barStubble").style.width = `${cS}%`;
     document.getElementById("barBackground").style.width = `${cB}%`;
-    document.getElementById("diagSummaryBox").innerHTML = `💡 <b>Atmospheric Diagnostics:</b> Fusing spatial Kriging/IDW & 826 GEM industrial stack plumes for (${lat.toFixed(3)}, ${lon.toFixed(3)})...`;
+    document.getElementById("diagSummaryBox").innerHTML = `💡 <b>Atmospheric Diagnostics:</b> Solving spatial Ordinary Kriging & 826 GEM industrial stack plumes for (${lat.toFixed(3)}, ${lon.toFixed(3)})...`;
 
     try {
       const res = await fetch(`${API_BASE}/aqi/interpolate?lat=${lat}&lon=${lon}`);
@@ -1080,10 +1689,13 @@ function initMap() {
           </div>
         `).openPopup();
       } else {
+        const krigBadge = data.kriging ? `<div style="font-size:10px; color:#059669; font-weight:700; margin-top:3px; background:#ecfdf5; padding:2px 6px; border-radius:6px; display:inline-block;">📍 Ordinary Kriging (σ: ±${data.kriging.stdError})</div>` : '';
+
         clickPinMarker.setPopupContent(`
           <div style="padding:4px;">
-            <div style="font-size:12px; font-weight:700; color:#64748b;">📍 Interpolated AQI (Physics-Fused)</div>
+            <div style="font-size:12px; font-weight:700; color:#64748b;">📍 Interpolated AQI (Ordinary Kriging)</div>
             <div style="font-size:20px; font-weight:800; color:${data.color}; margin-top:2px;">${data.aqi} <span style="font-size:13px;">${data.category}</span></div>
+            ${krigBadge}
             <div style="font-size:11px; color:#94a3b8; margin-top:3px;">Nearest: <b>${data.nearestStation ? data.nearestStation.name : 'CPCB Station'}</b></div>
             <div style="font-size:11px; color:#94a3b8;">${data.nearestStation ? data.nearestStation.city : 'India'} · ${data.nearestStation ? data.nearestStation.distanceKm : ''} km away</div>
           </div>
@@ -1162,6 +1774,13 @@ function updateActiveLocation(data) {
   document.getElementById("activeAqiVal").style.color = data.color;
   document.getElementById("activeCategory").textContent = `${data.category} Air Quality`;
   document.getElementById("activeCategory").style.color = data.color;
+
+  if (data.kriging) {
+    const kBadge = document.getElementById("krigingConfidenceBadge");
+    if (kBadge) kBadge.textContent = `Confidence σ: ±${data.kriging.stdError}`;
+    const mBadge = document.getElementById("krigingMethodBadge");
+    if (mBadge) mBadge.textContent = data.interpolationMethod || "Ordinary Kriging (Spherical Variogram)";
+  }
 
   if (data.nearestStation) {
     document.getElementById("nearestStationName").textContent = data.nearestStation.name;
@@ -1393,7 +2012,7 @@ async function loadSpatialGrid() {
     const res = await fetch(`${API_BASE}/aqi/grid`);
     const data = await res.json();
 
-    // Draw soft IDW halo cells
+    // Draw spatial Ordinary Kriging continuous halo cells
     if (data.grid && data.grid.length) {
       data.grid.forEach(cell => {
         L.circle([cell.lat, cell.lon], {
@@ -1408,7 +2027,7 @@ async function loadSpatialGrid() {
 
     // Station markers — show CPCB dataset AQI; full live fusion loads only on click
     if (data.stations && data.stations.length) {
-      document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Real-Time Stations • Spatial AI Fusion`;
+      document.getElementById("sysStatus").textContent = `${data.stations.length} CPCB Real-Time Stations • Spatial Kriging Surface`;
 
       data.stations.forEach(s => {
         const stAqi = s.value || 0;

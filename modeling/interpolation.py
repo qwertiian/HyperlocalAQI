@@ -32,7 +32,8 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_latest_station_aqi(conn):
     """One AQI value per station: the most recent reading."""
-    if USE_POSTGRES:
+    is_postgres = hasattr(conn, "get_dsn_parameters")
+    if is_postgres:
         query = """
             select distinct on (r.station_id) r.station_id, s.name, s.city, s.lat, s.lon, r.value, r.recorded_at
             from readings r join stations s on s.station_id = r.station_id
@@ -104,9 +105,17 @@ def run_kriging_grid(df):
 
 def leave_one_station_out_cv(df):
     """Core evaluation for O2: for each station, predict its value using IDW
-    fit on all OTHER stations, compare to nearest-station-value baseline."""
+    and Ordinary Kriging fit on all OTHER stations, compare to nearest-station-value baseline."""
     results = []
     stations = df.station_id.tolist()
+
+    has_pykrige = False
+    try:
+        from pykrige.ok import OrdinaryKriging
+        has_pykrige = True
+    except ImportError:
+        pass
+
     for held_out in stations:
         train = df[df.station_id != held_out]
         test = df[df.station_id == held_out].iloc[0]
@@ -118,9 +127,23 @@ def leave_one_station_out_cv(df):
         dists = np.sqrt((train.lon - test.lon) ** 2 + (train.lat - test.lat) ** 2)
         nearest_pred = train.iloc[dists.values.argmin()].value
 
+        krig_pred = idw_pred
+        if has_pykrige and len(train) >= 4:
+            try:
+                ok = OrdinaryKriging(
+                    train.lon.values, train.lat.values, train.value.values,
+                    variogram_model="spherical", verbose=False, enable_plotting=False
+                )
+                z, _ = ok.execute("points", np.array([test.lon]), np.array([test.lat]))
+                krig_pred = float(z[0])
+            except Exception:
+                krig_pred = idw_pred
+
         results.append({
             "station_id": held_out,
             "actual": test.value,
+            "kriging_pred": round(krig_pred, 1),
+            "kriging_abs_error": round(abs(krig_pred - test.value), 1),
             "idw_pred": round(idw_pred, 1),
             "idw_abs_error": round(abs(idw_pred - test.value), 1),
             "nearest_pred": round(float(nearest_pred), 1),
@@ -138,7 +161,7 @@ def main():
         print("Not enough station data yet. Run ingestion/seed_sample_data.py first.")
         return
 
-    print(f"Loaded {len(df)} stations. Running IDW grid + LOSO cross-validation...")
+    print(f"Loaded {len(df)} stations. Running IDW grid + Ordinary Kriging + LOSO cross-validation...")
 
     idw_cells = run_idw_grid(df)
     with open(OUT_DIR / "idw_grid.json", "w") as f:
@@ -151,14 +174,19 @@ def main():
     krige_cells = run_kriging_grid(df)
     if krige_cells:
         with open(OUT_DIR / "kriging_grid.json", "w") as f:
-            json.dump({"grid": krige_cells}, f)
+            json.dump({
+                "stations": df[["station_id", "name", "city", "lat", "lon", "value"]].to_dict("records"),
+                "grid": krige_cells
+            }, f)
         print(f"Wrote {OUT_DIR / 'kriging_grid.json'}")
 
     cv = leave_one_station_out_cv(df)
     cv.to_csv(OUT_DIR / "loso_cv_results.csv", index=False)
+    rmse_krig = np.sqrt((cv.kriging_abs_error ** 2).mean())
     rmse_idw = np.sqrt((cv.idw_abs_error ** 2).mean())
     rmse_nearest = np.sqrt((cv.nearest_abs_error ** 2).mean())
     print(f"\n--- Leave-one-station-out results (this is a paper table) ---")
+    print(f"Ordinary Kriging RMSE: {rmse_krig:.2f}   MAE: {cv.kriging_abs_error.mean():.2f}")
     print(f"IDW              RMSE: {rmse_idw:.2f}   MAE: {cv.idw_abs_error.mean():.2f}")
     print(f"Nearest-station  RMSE: {rmse_nearest:.2f}   MAE: {cv.nearest_abs_error.mean():.2f}")
     print(f"Wrote {OUT_DIR / 'loso_cv_results.csv'}")

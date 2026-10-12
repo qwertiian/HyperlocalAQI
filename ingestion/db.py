@@ -25,7 +25,13 @@ if USE_POSTGRES:
     import psycopg2.extras
 
     def get_conn():
-        return psycopg2.connect(DATABASE_URL)
+        try:
+            return psycopg2.connect(DATABASE_URL, connect_timeout=3)
+        except Exception as e:
+            print(f"PostgreSQL connection failed ({e}); falling back to local SQLite at {SQLITE_PATH}")
+            conn = sqlite3.connect(SQLITE_PATH)
+            conn.execute("pragma foreign_keys = on")
+            return conn
 
 else:
     SQLITE_SCHEMA = """
