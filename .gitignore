@@ -34,3 +34,7 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Presentation & generation scripts
+*.pptx
+generate_seminar2_presentation.py
