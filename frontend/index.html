@@ -1707,6 +1707,63 @@ function toggleRouteSteps(routeId, event) {
   if (arrow) arrow.textContent = isHidden ? "▲" : "▼";
 }
 
+// Step highlight layer for map interaction
+let stepHighlightLayer = null;
+let stepHighlightMarker = null;
+
+function highlightStepOnMap(routeId, stepIdx, event) {
+  if (event) event.stopPropagation();
+  if (!calculatedRoutesData) return;
+  const route = calculatedRoutesData.routes.find(r => r.id === routeId);
+  if (!route || !route.steps || !route.steps[stepIdx]) return;
+  const step = route.steps[stepIdx];
+
+  // Remove previous highlight
+  if (stepHighlightLayer) { map.removeLayer(stepHighlightLayer); stepHighlightLayer = null; }
+  if (stepHighlightMarker) { map.removeLayer(stepHighlightMarker); stepHighlightMarker = null; }
+
+  // If step has stepCoords, draw them highlighted
+  if (step.stepCoords && step.stepCoords.length >= 2) {
+    stepHighlightLayer = L.polyline(step.stepCoords, {
+      color: "#2563eb",
+      weight: 9,
+      opacity: 1.0,
+      lineCap: "round",
+      lineJoin: "round"
+    }).addTo(map);
+    map.fitBounds(stepHighlightLayer.getBounds(), { padding: [60, 60], maxZoom: 16 });
+  }
+
+  // Drop a marker at the maneuver location
+  if (step.maneuverLocation) {
+    stepHighlightMarker = L.marker(step.maneuverLocation, {
+      icon: L.divIcon({
+        className: "step-marker",
+        html: `<div style="background:#2563eb; color:white; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; box-shadow:0 3px 10px rgba(37,99,235,0.5); border:2px solid white;">${stepIdx + 1}</div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      })
+    }).addTo(map);
+    stepHighlightMarker.bindPopup(`<b>${step.instruction}</b><br/><span style="color:#64748b; font-size:11px;">🛣️ ${step.road} · ${step.distance}</span>`).openPopup();
+
+    if (!step.stepCoords || step.stepCoords.length < 2) {
+      map.setView(step.maneuverLocation, 16);
+    }
+  }
+
+  // Highlight the clicked step row in the UI
+  const stepsList = document.getElementById(`steps-list-${routeId}`);
+  if (stepsList) {
+    stepsList.querySelectorAll(".step-row").forEach((row, i) => {
+      row.style.background = (i === stepIdx) ? "#eff6ff" : "#ffffff";
+      row.style.borderLeft = (i === stepIdx) ? "3px solid #2563eb" : "none";
+    });
+  }
+
+  // Also select this route as active
+  selectActiveRoute(routeId);
+}
+
 function renderRoutesUI(data) {
   const container = document.getElementById("routeResultsContainer");
   const clearBtn = document.getElementById("btnClearRoute");
@@ -1714,13 +1771,13 @@ function renderRoutesUI(data) {
   container.style.display = "flex";
   if (clearBtn) clearBtn.style.display = "block";
 
-  const modeIcon = routeTravelMode === "walking" ? "🚶 Pedestrian" : (routeTravelMode === "cycling" ? "🚴 Cycling" : "🚗 Driving");
+  const modeIcon = routeTravelMode === "walking" ? "🚶 Walking" : (routeTravelMode === "cycling" ? "🚴 Cycling" : "🚗 Driving");
 
   container.innerHTML = `
     <div style="font-size:10.5px; font-weight:800; color:#475569; display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
       <span>🛣️ Road-Following Routes (${modeIcon})</span>
       <span style="font-size:9.5px; color:#059669; background:#ecfdf5; padding:1px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
-        ✓ Google Maps Road Geometry
+        ✓ OSRM Road Geometry
       </span>
     </div>
   ` + data.routes.map((r, idx) => {
@@ -1766,21 +1823,22 @@ function renderRoutesUI(data) {
           <span>⚠️ Peak: <b>${r.peakHotspot}</b></span>
         </div>
 
-        <!-- Google Maps-style Turn-by-Turn Steps Dropdown -->
+        <!-- Google Maps-style Clickable Turn-by-Turn Steps -->
         ${(r.steps && r.steps.length > 0) ? `
           <div style="margin-top:6px; border-top:1px solid #e2e8f0; padding-top:6px;">
             <div onclick="toggleRouteSteps('${r.id}', event)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; color:#3b82f6;">
-              <span>🧭 Turn-by-Turn Directions (${r.steps.length} turns)</span>
+              <span>🧭 Turn-by-Turn Directions (${r.steps.length} steps)</span>
               <span id="step-arrow-${r.id}" style="font-size:10px;">▼</span>
             </div>
-            <div id="steps-list-${r.id}" style="display:none; flex-direction:column; gap:4px; margin-top:6px; padding:6px; background:#ffffff; border-radius:8px; border:1px solid #cbd5e1; max-height:160px; overflow-y:auto;">
+            <div id="steps-list-${r.id}" style="display:none; flex-direction:column; gap:2px; margin-top:6px; padding:4px; background:#ffffff; border-radius:8px; border:1px solid #cbd5e1; max-height:180px; overflow-y:auto;">
               ${r.steps.map((st, sIdx) => `
-                <div style="display:flex; align-items:flex-start; gap:6px; font-size:9.5px; color:#1e293b; line-height:1.3; border-bottom:1px solid #f1f5f9; padding-bottom:3px;">
-                  <span style="font-weight:800; color:#64748b; min-width:14px;">${sIdx + 1}.</span>
+                <div class="step-row" onclick="highlightStepOnMap('${r.id}', ${sIdx}, event)" style="display:flex; align-items:flex-start; gap:6px; font-size:9.5px; color:#1e293b; line-height:1.3; border-bottom:1px solid #f1f5f9; padding:4px 3px; cursor:pointer; border-radius:4px; transition:background 0.15s ease;" onmouseenter="this.style.background='#f0f9ff'" onmouseleave="this.style.background='#fff'">
+                  <span style="font-weight:800; color:#2563eb; min-width:16px; text-align:center; background:#eff6ff; border-radius:4px; padding:1px 3px; font-size:9px;">${sIdx + 1}</span>
                   <div style="flex:1;">
                     <div style="font-weight:700;">${st.instruction}</div>
                     <div style="color:#64748b; font-size:9px;">🛣️ ${st.road} · ${st.distance} (${st.duration || ''})</div>
                   </div>
+                  <span style="font-size:11px; cursor:pointer; color:#94a3b8;" title="Show on map">📍</span>
                 </div>
               `).join("")}
             </div>
@@ -1820,22 +1878,41 @@ function renderRoutesOnMap(data) {
 
   data.routes.forEach(r => {
     const isGreen = r.routeType === "green";
+    const isArterial = r.routeType === "arterial";
+
+    // Draw casing (shadow) polyline first for road-like appearance
+    const casingStyle = {
+      color: isGreen ? "#064e3b" : (isArterial ? "#78350f" : "#7f1d1d"),
+      weight: isGreen ? 9 : 7,
+      opacity: isGreen ? 0.5 : 0.35,
+      lineCap: "round",
+      lineJoin: "round"
+    };
+    const casingPoly = L.polyline(r.path, casingStyle).addTo(map);
+    casingPoly.routeId = r.id;
+    casingPoly._isCasing = true;
+    routePolylines.push(casingPoly);
+
+    // Main route line on top
     const lineStyle = isGreen ? {
-      color: "#059669",
-      weight: 6.5,
+      color: "#10b981",
+      weight: 6,
       opacity: 0.95,
       lineCap: "round",
       lineJoin: "round"
-    } : (r.routeType === "arterial" ? {
+    } : (isArterial ? {
       color: "#f59e0b",
-      weight: 5.0,
-      opacity: 0.85,
-      dashArray: "6, 8"
+      weight: 5,
+      opacity: 0.9,
+      lineCap: "round",
+      lineJoin: "round"
     } : {
-      color: "#dc2626",
+      color: "#ef4444",
       weight: 4.5,
-      opacity: 0.75,
-      dashArray: "4, 6"
+      opacity: 0.8,
+      lineCap: "round",
+      lineJoin: "round",
+      dashArray: "8, 6"
     });
 
     const poly = L.polyline(r.path, lineStyle).addTo(map);
@@ -1846,7 +1923,7 @@ function renderRoutesOnMap(data) {
           ${r.meanAqi} AQI <span style="font-size:11px; font-weight:600;">(${r.category})</span>
         </div>
         <div style="font-size:10.5px; color:#64748b; margin-top:3px;">
-          📏 ${r.distanceKm} km · ⏱️ ${r.durationMinutes} mins · 🫁 Inhaled Dose: ${r.exposureDose}
+          📏 ${r.distanceKm} km · ⏱️ ${r.durationMinutes} mins · 🫁 Dose: ${r.exposureDose}
         </div>
         <div style="font-size:10px; color:#059669; font-weight:700; margin-top:4px;">
           ${r.highlightBadge}
@@ -1867,6 +1944,11 @@ function renderRoutesOnMap(data) {
 
 function selectActiveRoute(routeId) {
   if (!calculatedRoutesData) return;
+
+  // Clear step highlight
+  if (stepHighlightLayer) { map.removeLayer(stepHighlightLayer); stepHighlightLayer = null; }
+  if (stepHighlightMarker) { map.removeLayer(stepHighlightMarker); stepHighlightMarker = null; }
+
   document.querySelectorAll(".route-card").forEach(c => {
     c.classList.remove("selected", "arterial", "bypass");
   });
@@ -1880,12 +1962,23 @@ function selectActiveRoute(routeId) {
 
   routePolylines.forEach(p => {
     if (p.routeId === routeId) {
-      p.setStyle({ weight: 7.5, opacity: 1.0 });
+      if (p._isCasing) {
+        p.setStyle({ weight: 10, opacity: 0.6 });
+      } else {
+        p.setStyle({ weight: 7.5, opacity: 1.0 });
+      }
       p.bringToFront();
     } else {
-      p.setStyle({ weight: 3.5, opacity: 0.45 });
+      if (p._isCasing) {
+        p.setStyle({ weight: 5, opacity: 0.15 });
+      } else {
+        p.setStyle({ weight: 3, opacity: 0.35 });
+      }
     }
   });
+
+  // Bring non-casing lines to front last
+  routePolylines.filter(p => p.routeId === routeId && !p._isCasing).forEach(p => p.bringToFront());
 }
 
 function clearNagpurRoutes(clearUI = true) {
@@ -1893,6 +1986,8 @@ function clearNagpurRoutes(clearUI = true) {
   routePolylines = [];
   routeMarkers.forEach(m => map.removeLayer(m));
   routeMarkers = [];
+  if (stepHighlightLayer) { map.removeLayer(stepHighlightLayer); stepHighlightLayer = null; }
+  if (stepHighlightMarker) { map.removeLayer(stepHighlightMarker); stepHighlightMarker = null; }
 
   if (clearUI) {
     const container = document.getElementById("routeResultsContainer");
