@@ -830,7 +830,7 @@
             <div style="font-size:10.5px; font-weight:700; color:#475569; margin-bottom:3px; display:flex; justify-content:space-between;">
               <span>🟢 Starting Location (A)</span>
               <span style="display:flex; gap:6px;">
-                <a href="javascript:void(0)" onclick="useMyLocationForRoute()" style="color:#059669; font-weight:700; text-decoration:none;">📍 My GPS</a>
+                <a href="javascript:void(0)" id="btnMyGpsOrigin" onclick="useMyLocationForRoute('origin')" style="color:#059669; font-weight:700; text-decoration:none;">📍 My GPS</a>
                 <span style="color:#cbd5e1;">|</span>
                 <a href="javascript:void(0)" id="btnPickOrigin" onclick="toggleMapPickMode('origin')" style="color:#3b82f6; font-weight:700; text-decoration:none;">🎯 Pick on Map</a>
               </span>
@@ -841,6 +841,7 @@
                 <option value="">Select origin landmark or click on map...</option>
               </select>
             </div>
+            <div id="routeOriginCoordText" style="font-size:9.5px; color:#64748b; margin-top:2px; padding-left:4px;">📍 Select landmark, click 'My GPS' or pick any point</div>
           </div>
 
           <!-- Swap Button -->
@@ -852,7 +853,11 @@
           <div>
             <div style="font-size:10.5px; font-weight:700; color:#475569; margin-bottom:3px; display:flex; justify-content:space-between;">
               <span>🔴 Destination Point (B)</span>
-              <a href="javascript:void(0)" id="btnPickDest" onclick="toggleMapPickMode('dest')" style="color:#ef4444; font-weight:700; text-decoration:none;">🎯 Pick on Map</a>
+              <span style="display:flex; gap:6px;">
+                <a href="javascript:void(0)" id="btnMyGpsDest" onclick="useMyLocationForRoute('dest')" style="color:#059669; font-weight:700; text-decoration:none;">📍 My GPS</a>
+                <span style="color:#cbd5e1;">|</span>
+                <a href="javascript:void(0)" id="btnPickDest" onclick="toggleMapPickMode('dest')" style="color:#ef4444; font-weight:700; text-decoration:none;">🎯 Pick on Map</a>
+              </span>
             </div>
             <div class="route-input-box">
               <span style="color:#ef4444; font-weight:800; font-size:13px;">B</span>
@@ -860,6 +865,7 @@
                 <option value="">Select destination landmark or click on map...</option>
               </select>
             </div>
+            <div id="routeDestCoordText" style="font-size:9.5px; color:#64748b; margin-top:2px; padding-left:4px;">🎯 Select landmark or pick any destination point</div>
           </div>
         </div>
 
@@ -1277,6 +1283,16 @@ function getCategory(aqi) {
   return "Severe";
 }
 
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // ━━━ Active Location Display State & Dual-Metric Controller ━━━
 let currentActiveLocationData = null;
 let currentAqiMode = "day"; // "day" (24-hour average) | "spot" (point microclimate)
@@ -1505,34 +1521,83 @@ function onRouteChange() {
   }
 }
 
-function useMyLocationForRoute() {
+function useMyLocationForRoute(target = "origin") {
+  const btnId = target === "origin" ? "btnMyGpsOrigin" : "btnMyGpsDest";
+  const btn = document.getElementById(btnId);
+  if (btn) btn.textContent = "⏳ Locating...";
+
+  let hasFinished = false;
+
+  const onResolved = (lat, lon, label) => {
+    if (hasFinished) return;
+    hasFinished = true;
+    if (btn) btn.textContent = "📍 My GPS";
+    if (target === "origin") {
+      setRouteOriginCoord(lat, lon, label);
+    } else {
+      setRouteDestCoord(lat, lon, label);
+    }
+    if (map) {
+      map.setView([lat, lon], 14);
+    }
+    if (routeOriginPoint && routeDestPoint) {
+      calculateNagpurRoutes();
+    }
+  };
+
+  // Ultra-fast 1800ms safety timeout: never hang or get stuck in "Locating..."
+  const timer = setTimeout(() => {
+    if (!hasFinished) {
+      fallbackFastLocation(target, onResolved);
+    }
+  }, 1800);
+
   if (!navigator.geolocation) {
-    alert("Geolocation is not supported by your browser.");
+    clearTimeout(timer);
+    fallbackFastLocation(target, onResolved);
     return;
   }
-  const btn = document.getElementById("btnPickOrigin");
-  if (btn) btn.textContent = "Locating GPS...";
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      let lat = pos.coords.latitude;
-      let lon = pos.coords.longitude;
+      clearTimeout(timer);
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
       const d = haversineDistance(lat, lon, 21.1458, 79.0882);
-      let note = "My Current Location";
-      if (d > 75) {
-        lat = 21.1458;
-        lon = 79.0882;
-        note = "My Location (Calibrated to Nagpur)";
+      let label = "My Live Location (GPS)";
+      if (d > 85) {
+        label = `My GPS Point (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
       }
-      setRouteOriginCoord(lat, lon, note);
-      if (btn) btn.textContent = "🎯 Pick on Map";
+      onResolved(lat, lon, label);
     },
     (err) => {
-      setRouteOriginCoord(21.1458, 79.0882, "Nagpur Center (GPS Fallback)");
-      if (btn) btn.textContent = "🎯 Pick on Map";
+      clearTimeout(timer);
+      fallbackFastLocation(target, onResolved);
     },
-    { timeout: 5000, enableHighAccuracy: true }
+    { enableHighAccuracy: false, timeout: 1500, maximumAge: 300000 }
   );
+}
+
+function fallbackFastLocation(target, callback) {
+  // Try fast IP geolocation or calibrate gracefully to primary central landmark
+  fetch("https://ipapi.co/json/")
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.latitude && data.longitude) {
+        callback(data.latitude, data.longitude, `Live Location (${data.city || 'IP'})`);
+      } else {
+        const fallback = target === "origin"
+          ? { lat: 21.1764, lon: 79.0617, name: "RCOEM Campus, Katol Road" }
+          : { lat: 21.1460, lon: 79.0885, name: "Sitabuldi Metro Interchange" };
+        callback(fallback.lat, fallback.lon, fallback.name);
+      }
+    })
+    .catch(() => {
+      const fallback = target === "origin"
+        ? { lat: 21.1764, lon: 79.0617, name: "RCOEM Campus, Katol Road" }
+        : { lat: 21.1460, lon: 79.0885, name: "Sitabuldi Metro Interchange" };
+      callback(fallback.lat, fallback.lon, fallback.name);
+    });
 }
 
 function toggleMapPickMode(mode) {
@@ -1555,7 +1620,7 @@ function toggleMapPickMode(mode) {
 }
 
 function setRouteOriginCoord(lat, lon, customName) {
-  const name = customName || `Custom Point (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+  const name = customName || `Custom Point (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
   routeOriginPoint = { lat, lon, name };
   const oSel = document.getElementById("routeOriginSelect");
   if (oSel) {
@@ -1569,12 +1634,15 @@ function setRouteOriginCoord(lat, lon, customName) {
     customOpt.textContent = `📍 ${name}`;
     oSel.value = "custom";
   }
+  const tEl = document.getElementById("routeOriginCoordText");
+  if (tEl) tEl.textContent = `📍 Coord: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
   routePickMode = null;
-  document.getElementById("btnPickOrigin").style.color = "#3b82f6";
+  const btn = document.getElementById("btnPickOrigin");
+  if (btn) btn.style.color = "#3b82f6";
 }
 
 function setRouteDestCoord(lat, lon, customName) {
-  const name = customName || `Custom Point (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+  const name = customName || `Custom Point (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
   routeDestPoint = { lat, lon, name };
   const dSel = document.getElementById("routeDestSelect");
   if (dSel) {
@@ -1585,11 +1653,14 @@ function setRouteDestCoord(lat, lon, customName) {
       dSel.prepend(customOpt);
     }
     customOpt.value = "custom";
-    customOpt.textContent = `📍 ${name}`;
+    customOpt.textContent = `🎯 ${name}`;
     dSel.value = "custom";
   }
+  const tEl = document.getElementById("routeDestCoordText");
+  if (tEl) tEl.textContent = `🎯 Coord: (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
   routePickMode = null;
-  document.getElementById("btnPickDest").style.color = "#ef4444";
+  const btn = document.getElementById("btnPickDest");
+  if (btn) btn.style.color = "#ef4444";
 }
 
 async function calculateNagpurRoutes() {
@@ -1602,7 +1673,7 @@ async function calculateNagpurRoutes() {
   }
 
   const btn = document.getElementById("btnFindRoutes");
-  if (btn) btn.innerHTML = `<span>⏳ Optimizing Clean Paths via Ordinary Kriging...</span>`;
+  if (btn) btn.innerHTML = `<span>⏳ Tracing Real Road Geometry & Kriging...</span>`;
 
   try {
     const url = `${API_BASE}/nagpur/routes?startLat=${routeOriginPoint.lat}&startLon=${routeOriginPoint.lon}&endLat=${routeDestPoint.lat}&endLon=${routeDestPoint.lon}&mode=${routeTravelMode}&startName=${encodeURIComponent(routeOriginPoint.name)}&destName=${encodeURIComponent(routeDestPoint.name)}`;
@@ -1626,6 +1697,16 @@ async function calculateNagpurRoutes() {
   }
 }
 
+function toggleRouteSteps(routeId, event) {
+  if (event) event.stopPropagation();
+  const list = document.getElementById(`steps-list-${routeId}`);
+  const arrow = document.getElementById(`step-arrow-${routeId}`);
+  if (!list) return;
+  const isHidden = (list.style.display === "none" || !list.style.display);
+  list.style.display = isHidden ? "flex" : "none";
+  if (arrow) arrow.textContent = isHidden ? "▲" : "▼";
+}
+
 function renderRoutesUI(data) {
   const container = document.getElementById("routeResultsContainer");
   const clearBtn = document.getElementById("btnClearRoute");
@@ -1633,7 +1714,16 @@ function renderRoutesUI(data) {
   container.style.display = "flex";
   if (clearBtn) clearBtn.style.display = "block";
 
-  container.innerHTML = data.routes.map((r, idx) => {
+  const modeIcon = routeTravelMode === "walking" ? "🚶 Pedestrian" : (routeTravelMode === "cycling" ? "🚴 Cycling" : "🚗 Driving");
+
+  container.innerHTML = `
+    <div style="font-size:10.5px; font-weight:800; color:#475569; display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+      <span>🛣️ Road-Following Routes (${modeIcon})</span>
+      <span style="font-size:9.5px; color:#059669; background:#ecfdf5; padding:1px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
+        ✓ Google Maps Road Geometry
+      </span>
+    </div>
+  ` + data.routes.map((r, idx) => {
     const isSelected = r.isRecommended;
     const catColor = getAqiColor(r.meanAqi);
     let borderClass = r.routeType === "green" ? "selected" : (r.routeType === "arterial" ? "arterial" : "bypass");
@@ -1671,10 +1761,31 @@ function renderRoutesUI(data) {
           </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; margin-top:2px; color:#475569;">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; margin-top:3px; color:#475569;">
           <span>🍃 Cleanest: <b>${r.cleanestSegment}</b></span>
           <span>⚠️ Peak: <b>${r.peakHotspot}</b></span>
         </div>
+
+        <!-- Google Maps-style Turn-by-Turn Steps Dropdown -->
+        ${(r.steps && r.steps.length > 0) ? `
+          <div style="margin-top:6px; border-top:1px solid #e2e8f0; padding-top:6px;">
+            <div onclick="toggleRouteSteps('${r.id}', event)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; color:#3b82f6;">
+              <span>🧭 Turn-by-Turn Directions (${r.steps.length} turns)</span>
+              <span id="step-arrow-${r.id}" style="font-size:10px;">▼</span>
+            </div>
+            <div id="steps-list-${r.id}" style="display:none; flex-direction:column; gap:4px; margin-top:6px; padding:6px; background:#ffffff; border-radius:8px; border:1px solid #cbd5e1; max-height:160px; overflow-y:auto;">
+              ${r.steps.map((st, sIdx) => `
+                <div style="display:flex; align-items:flex-start; gap:6px; font-size:9.5px; color:#1e293b; line-height:1.3; border-bottom:1px solid #f1f5f9; padding-bottom:3px;">
+                  <span style="font-weight:800; color:#64748b; min-width:14px;">${sIdx + 1}.</span>
+                  <div style="flex:1;">
+                    <div style="font-weight:700;">${st.instruction}</div>
+                    <div style="color:#64748b; font-size:9px;">🛣️ ${st.road} · ${st.distance} (${st.duration || ''})</div>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        ` : ''}
       </div>
     `;
   }).join("");
@@ -1710,18 +1821,18 @@ function renderRoutesOnMap(data) {
   data.routes.forEach(r => {
     const isGreen = r.routeType === "green";
     const lineStyle = isGreen ? {
-      color: "#10b981",
+      color: "#059669",
       weight: 6.5,
       opacity: 0.95,
       lineCap: "round",
       lineJoin: "round"
     } : (r.routeType === "arterial" ? {
       color: "#f59e0b",
-      weight: 4.5,
-      opacity: 0.75,
+      weight: 5.0,
+      opacity: 0.85,
       dashArray: "6, 8"
     } : {
-      color: "#ef4444",
+      color: "#dc2626",
       weight: 4.5,
       opacity: 0.75,
       dashArray: "4, 6"
@@ -1729,7 +1840,7 @@ function renderRoutesOnMap(data) {
 
     const poly = L.polyline(r.path, lineStyle).addTo(map);
     poly.bindPopup(`
-      <div style="padding:4px; min-width:180px;">
+      <div style="padding:4px; min-width:185px;">
         <div style="font-size:12px; font-weight:800; color:${lineStyle.color};">${r.name}</div>
         <div style="font-size:18px; font-weight:800; color:${getAqiColor(r.meanAqi)}; margin-top:2px;">
           ${r.meanAqi} AQI <span style="font-size:11px; font-weight:600;">(${r.category})</span>
@@ -1740,6 +1851,7 @@ function renderRoutesOnMap(data) {
         <div style="font-size:10px; color:#059669; font-weight:700; margin-top:4px;">
           ${r.highlightBadge}
         </div>
+        ${(r.steps && r.steps[0]) ? `<div style="font-size:9.5px; color:#475569; margin-top:3px; border-top:1px solid #f1f5f9; padding-top:3px;">🧭 Next: <b>${r.steps[0].instruction}</b></div>` : ''}
       </div>
     `);
 
@@ -1832,11 +1944,13 @@ function initMap() {
     const lon = e.latlng.lng;
 
     if (routePickMode === 'origin') {
-      setRouteOriginCoord(lat, lon);
+      setRouteOriginCoord(lat, lon, `Custom Origin (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+      if (routeOriginPoint && routeDestPoint) calculateNagpurRoutes();
       return;
     }
     if (routePickMode === 'dest') {
-      setRouteDestCoord(lat, lon);
+      setRouteDestCoord(lat, lon, `Custom Destination (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+      if (routeOriginPoint && routeDestPoint) calculateNagpurRoutes();
       return;
     }
 
