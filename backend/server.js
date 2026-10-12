@@ -754,6 +754,12 @@ function evaluateRouteAqi(coords, type, mode, stations, weather) {
 
 app.get("/api/health", (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));
 
+app.get("/api/config", (req, res) => {
+  res.json({
+    cartoApiKey: process.env.CARTO_API_KEY || null,
+  });
+});
+
 // Live weather from Open-Meteo for any coordinate (completely free, no key)
 app.get("/api/weather/live", async (req, res) => {
   const lat = parseFloat(req.query.lat);
