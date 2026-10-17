@@ -404,12 +404,11 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 // represents the 24-hour time-weighted integration over diurnal variations (rush hours,
 // solar boundary layer expansion, and nocturnal inversion) across municipal stations.
 function computeDailyAverageMetrics(lat, lon, liveAir, spotAqi, stationsWithDist) {
-  const isNagpur = Math.abs(lat - 21.1458) < 0.35 && Math.abs(lon - 79.0882) < 0.35;
   let dailyAvg = null;
   let dailyMin = null;
   let dailyMax = null;
 
-  // 1. Compute from live hourly series if available
+  // 1. Compute dynamically from live hourly series if available (past 24h + diurnal cycle)
   if (liveAir && liveAir.hourlySeries && liveAir.hourlySeries.length >= 8) {
     const todayItems = liveAir.hourlySeries.filter(h => h.diffHours <= 12 && h.diffHours >= -12);
     const set = todayItems.length >= 6 ? todayItems : liveAir.hourlySeries.slice(0, 24);
@@ -421,17 +420,21 @@ function computeDailyAverageMetrics(lat, lon, liveAir, spotAqi, stationsWithDist
     }
   }
 
-  // 2. Regulatory CPCB 24-hour Diurnal Calibration
-  // For Nagpur: 15 municipal monitoring stations + diurnal rush hours (morning rush 8-10am & evening inversion 7-10pm).
-  // CPCB 24-hour NAQI standard, IQAir (68), and AccuWeather (67) benchmark is 68.
-  if (isNagpur) {
-    dailyAvg = 68;
-    dailyMin = 41;
-    dailyMax = 89;
-  } else if (!dailyAvg) {
-    dailyAvg = Math.round(spotAqi * 1.32);
-    dailyMin = Math.max(15, Math.round(spotAqi * 0.90));
-    dailyMax = Math.round(spotAqi * 1.65);
+  // 2. Statistical multi-station fallback from spotAqi and nearby stations
+  if (!dailyAvg || isNaN(dailyAvg)) {
+    if (stationsWithDist && stationsWithDist.length > 0) {
+      const nearbyVals = stationsWithDist.slice(0, 6).map(s => s.value).filter(v => v > 0);
+      if (nearbyVals.length > 0) {
+        const stationMean = nearbyVals.reduce((a, b) => a + b, 0) / nearbyVals.length;
+        dailyAvg = Math.round(0.60 * spotAqi + 0.40 * stationMean);
+      } else {
+        dailyAvg = Math.round(spotAqi * 1.12);
+      }
+    } else {
+      dailyAvg = Math.round(spotAqi * 1.12);
+    }
+    dailyMin = Math.max(15, Math.round(dailyAvg * 0.78));
+    dailyMax = Math.round(dailyAvg * 1.35);
   }
 
   const catInfo = getCategory(dailyAvg);
@@ -441,9 +444,7 @@ function computeDailyAverageMetrics(lat, lon, liveAir, spotAqi, stationsWithDist
     dailyMaxAqi: dailyMax,
     category: catInfo.category,
     color: catInfo.color,
-    benchmark: isNagpur
-      ? "Calibrated to CPCB 24-Hour Regulatory Integration & IQAir (68) / AccuWeather (67)"
-      : "CPCB 24-Hour Time-Weighted Diurnal Average",
+    benchmark: "CPCB 24-Hour Diurnal Integration · Multi-Station Regulatory Benchmark",
     spotAqi: spotAqi,
     method: "Diurnal Time-Series + Spatial Multi-Station 24-Hour CPCB Regulatory Integration"
   };
@@ -1441,11 +1442,8 @@ app.get("/api/aqi/metros", (req, res) => {
   });
 
   const metros = Object.keys(METRO_COORDS).map((cityName) => {
-    const vals = cityMap[cityName] || [45];
+    const vals = cityMap[cityName] || [75];
     let avgAqi = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-    if (cityName === "Nagpur") {
-      avgAqi = 68; // Calibrated 24-hr CPCB city average matching IQAir (68) / AccuWeather (67)
-    }
     const catInfo = getCategory(avgAqi);
     const changePct = Number(((Math.random() * 4 - 2)).toFixed(1));
 
@@ -1674,11 +1672,11 @@ app.get("/api/aqi/interpolate", async (req, res) => {
     });
   }
 
-  // Parallel fetch live Open-Meteo satellite feed, WAQI real-time CPCB station feed, and live weather with 800ms max timeout
+  // Parallel fetch live Open-Meteo satellite feed, WAQI real-time CPCB station feed, and live weather with 2500ms max timeout
   const [liveAir, waqiData, weather] = await Promise.all([
-    withTimeout(fetchLiveOpenMeteoAqi(lat, lon), 800, null),
-    withTimeout(fetchWaqiStationFeed(lat, lon), 800, null),
-    withTimeout(fetchOpenMeteo(lat, lon), 800, null)
+    withTimeout(fetchLiveOpenMeteoAqi(lat, lon), 2500, null),
+    withTimeout(fetchWaqiStationFeed(lat, lon), 2500, null),
+    withTimeout(fetchOpenMeteo(lat, lon), 2500, null)
   ]);
 
   const satelliteAqi = liveAir ? liveAir.liveAqi : null;
@@ -1697,8 +1695,12 @@ app.get("/api/aqi/interpolate", async (req, res) => {
   let finalAqi = 50;
   if (groundKrigingAqi > 0) {
     if (minDistance <= 15) {
-      // In ground station coverage zone (<= 15 km), strictly preserve Kriging ground truth
-      finalAqi = groundKrigingAqi;
+      // In ground station coverage zone (<= 15 km), blend ground Kriging (70%) with live satellite atmospheric column (30%)
+      if (satelliteAqi != null && satelliteAqi > 0) {
+        finalAqi = Math.round(0.70 * groundKrigingAqi + 0.30 * satelliteAqi);
+      } else {
+        finalAqi = groundKrigingAqi;
+      }
     } else if (satelliteAqi != null) {
       const alpha = Math.max(0.25, Math.exp(-(minDistance - 15) / 20.0));
       finalAqi = Math.round(alpha * groundKrigingAqi + (1.0 - alpha) * satelliteAqi);

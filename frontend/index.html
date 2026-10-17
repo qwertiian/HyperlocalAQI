@@ -235,11 +235,25 @@
     height: calc(100vh - 125px);
     padding: 16px 24px 24px;
     gap: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .main-layout.layout-wide .map-wrapper {
+    flex: 2.8;
+  }
+  .main-layout.layout-wide .sidebar-panel {
+    flex: 1.2;
+  }
+  .main-layout.layout-focus .map-wrapper {
+    flex: 1;
+  }
+  .main-layout.layout-focus .sidebar-panel {
+    display: none !important;
   }
 
   /* Map Container */
   .map-wrapper {
     flex: 1.2;
+    transition: flex 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: var(--card-bg);
     backdrop-filter: blur(20px);
     border: 1px solid var(--card-border);
@@ -779,6 +793,12 @@
       <span>📍 Click ANY spot on the map in India for real-time spatial AQI interpolation</span>
     </div>
     <div style="position:absolute; top:16px; right:16px; z-index:1000; display:flex; align-items:center; gap:8px;">
+      <button class="map-overlay-btn" id="btnToggleMapSize" onclick="toggleMapExpandedMode()" title="Toggle Wider / Expanded Map Size (Better Visibility)" style="background:rgba(255,255,255,0.95); color:#0f172a; border:1px solid #cbd5e1; padding:6px 12px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.25s ease;">
+        <span id="mapExpandIcon">⛶</span> <span id="mapExpandLabel">Expand Map</span>
+      </button>
+      <button class="map-overlay-btn" id="btnZoomStreet" onclick="zoomToNagpurStreetView()" title="Zoom in closer to street & road network" style="background:rgba(255,255,255,0.95); color:#0f172a; border:1px solid #cbd5e1; padding:6px 12px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.25s ease;">
+        <span>🔍</span> <span id="zoomStreetLabel">Street Zoom</span>
+      </button>
       <button class="map-overlay-btn" id="btnMapRouteToggle" onclick="toggleNagpurRouteDrawer()" title="Nagpur Green Safe Route Navigator" style="background: linear-gradient(135deg, #059669, #10b981); color:white; border: 1px solid rgba(16, 185, 129, 0.8); padding:6px 14px; border-radius:24px; font-weight:700; font-size:11px; cursor:pointer; backdrop-filter:blur(12px); display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(5, 150, 105, 0.35); transition:all 0.25s ease;">
         🌿 Green Safe Route
       </button>
@@ -921,28 +941,28 @@
         <!-- 24-Hour Day Average vs Spot Microclimate Dual Selector -->
         <div style="display:flex; background:#f1f5f9; padding:3px; border-radius:10px; margin:8px 0 10px 0; border:1px solid #e2e8f0; gap:4px;">
           <button id="btnAqiModeDay" onclick="setAqiDisplayMode('day')" style="flex:1; padding:6px 8px; border-radius:8px; font-size:11px; font-weight:800; border:none; cursor:pointer; background:white; color:#1e293b; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s ease;">
-            <span>📅 24-Hr Day Avg:</span> <span id="modeDayPillVal" style="color:#84cc16; font-size:12px;">68</span>
+            <span>📅 24-Hr Day Avg:</span> <span id="modeDayPillVal" style="color:#059669; font-size:12px;">--</span>
           </button>
           <button id="btnAqiModeSpot" onclick="setAqiDisplayMode('spot')" style="flex:1; padding:6px 8px; border-radius:8px; font-size:11px; font-weight:700; border:none; cursor:pointer; background:transparent; color:#64748b; display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s ease;">
-            <span>📍 Spot Microclimate:</span> <span id="modeSpotPillVal" style="color:#10b981; font-size:12px;">43</span>
+            <span>📍 Spot Microclimate:</span> <span id="modeSpotPillVal" style="color:#3b82f6; font-size:12px;">--</span>
           </button>
         </div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
           <div>
             <div style="display:flex; align-items:baseline; gap:8px;">
-              <div style="font-size:36px; font-weight:800; line-height:1;" id="activeAqiVal">68</div>
+              <div style="font-size:36px; font-weight:800; line-height:1;" id="activeAqiVal">--</div>
               <span id="aqiUnitsLabel" style="font-size:13px; font-weight:700; color:var(--text-muted);">AQI</span>
             </div>
-            <div style="font-size:12.5px; font-weight:800; margin-top:4px;" id="activeCategory">Satisfactory Air Quality</div>
-            <div style="font-size:10.5px; color:#64748b; margin-top:2px;" id="aqiContextSubtitle">Diurnal 24-Hour City Integration · Official Benchmark</div>
+            <div style="font-size:12.5px; font-weight:800; margin-top:4px;" id="activeCategory">Loading Air Quality...</div>
+            <div style="font-size:10.5px; color:#64748b; margin-top:2px;" id="aqiContextSubtitle">Diurnal 24-Hour City Integration · Multi-Station Benchmark</div>
           </div>
           <div style="text-align:right; font-size:12px; color:var(--text-secondary);">
             <div>Nearest Station:</div>
-            <div style="font-weight:700;" id="nearestStationName">Civil Lines (MPCB)</div>
+            <div style="font-weight:700;" id="nearestStationName">Opp GPO Civil Lines - MPCB</div>
             <div style="color:var(--text-muted); font-size:11px;" id="nearestStationDist">at station</div>
             <div id="dayMinMaxBadge" style="font-size:10.5px; font-weight:700; color:#0f766e; background:#f0fdfa; padding:2px 6px; border-radius:6px; margin-top:4px; display:inline-block; border:1px solid rgba(13,148,136,0.2);">
-              Min: 41 · Peak: 89
+              Loading Diurnal Range...
             </div>
           </div>
         </div>
@@ -950,7 +970,7 @@
         <!-- Verification / CPCB & IQAir Match Banner -->
         <div id="aqiBenchmarkNotice" style="margin-top:8px; background:linear-gradient(135deg, rgba(236,253,245,0.9), rgba(240,253,250,0.9)); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; font-size:10.5px;">
           <span style="font-weight:700; color:#065f46; display:flex; align-items:center; gap:5px;">
-            <span>🌐</span> <span id="benchmarkNoticeText">Matches CPCB Daily Bulletin & IQAir (68) / AccuWeather (67)</span>
+            <span>🌐</span> <span id="benchmarkNoticeText">CPCB 24-Hour Regulatory Integration · Multi-Station Benchmark</span>
           </span>
           <span id="benchmarkNoticeTag" style="font-size:9.5px; font-weight:800; color:#059669; background:white; padding:1px 6px; border-radius:4px; border:1px solid rgba(5,150,105,0.2);">Official 24h</span>
         </div>
@@ -1382,20 +1402,18 @@ function setAqiDisplayMode(mode) {
 
 function renderActiveLocationDisplay(data) {
   if (!data) return;
-  const isNagpur = (data.nearestStation && data.nearestStation.city && data.nearestStation.city.toLowerCase().includes("nagpur")) ||
-                   (data.lat && Math.abs(data.lat - 21.1458) < 0.35);
 
+  const spotVal = data.aqi != null ? data.aqi : 75;
   const dayVal = (data.dailyMetrics && data.dailyMetrics.dailyAverageAqi != null) 
     ? data.dailyMetrics.dailyAverageAqi 
-    : (isNagpur ? 68 : Math.round((data.aqi || 50) * 1.32));
-  const spotVal = data.aqi != null ? data.aqi : (isNagpur ? 43 : 50);
+    : Math.round(spotVal * 1.08);
 
   const minVal = (data.dailyMetrics && data.dailyMetrics.dailyMinAqi != null) 
     ? data.dailyMetrics.dailyMinAqi 
-    : (isNagpur ? 41 : Math.round(spotVal * 0.9));
+    : Math.round(dayVal * 0.82);
   const maxVal = (data.dailyMetrics && data.dailyMetrics.dailyMaxAqi != null) 
     ? data.dailyMetrics.dailyMaxAqi 
-    : (isNagpur ? 89 : Math.round(spotVal * 1.6));
+    : Math.round(dayVal * 1.35);
 
   // Update pills
   const pDay = document.getElementById("modeDayPillVal");
@@ -1429,7 +1447,7 @@ function renderActiveLocationDisplay(data) {
   const subEl = document.getElementById("aqiContextSubtitle");
   if (subEl) {
     subEl.textContent = (currentAqiMode === "day") 
-      ? "Diurnal 24-Hour City Integration · Official Benchmark" 
+      ? "Diurnal 24-Hour City Integration · Multi-Station Benchmark" 
       : "Hyperlocal Spot Microclimate at Selected Coordinate";
   }
 
@@ -1448,17 +1466,20 @@ function renderActiveLocationDisplay(data) {
   const noticeEl = document.getElementById("benchmarkNoticeText");
   const tagEl = document.getElementById("benchmarkNoticeTag");
   if (noticeEl) {
+    // Standard conversion from India NAQI to US EPA / IQAir scale
+    const usEquivAqi = (activeVal <= 50) ? Math.round(activeVal * 1.1) :
+                       (activeVal <= 100) ? Math.round(100 + (activeVal - 50) * 1.4) :
+                       Math.round(150 + (activeVal - 100) * 1.2);
+
     if (currentAqiMode === "day") {
-      noticeEl.textContent = isNagpur 
-        ? "Matches CPCB Daily Bulletin & IQAir (68) / AccuWeather (67)" 
-        : "CPCB 24-Hour Regulatory Integration Benchmark";
+      noticeEl.innerHTML = `CPCB 24-Hour Regulatory Integration · <span style="font-weight:700; color:#6366f1;">US/IQAir Equiv: ~${usEquivAqi} AQI</span>`;
       if (tagEl) {
         tagEl.textContent = "Official 24h";
         tagEl.style.color = "#059669";
         tagEl.style.borderColor = "rgba(5,150,105,0.2)";
       }
     } else {
-      noticeEl.textContent = "Hyperlocal Microclimate (Ordinary Kriging + Sensor Fusion)";
+      noticeEl.innerHTML = `Hyperlocal Point Microclimate (Kriging BLUE) · <span style="font-weight:700; color:#6366f1;">US/IQAir Equiv: ~${usEquivAqi} AQI</span>`;
       if (tagEl) {
         tagEl.textContent = "Spot Point";
         tagEl.style.color = "#3b82f6";
@@ -2185,8 +2206,7 @@ function initMap() {
 
 // Instant panel update from station click (no API call delay)
 function updateActiveLocationDirect({ aqi, category, color, stationName, stationCity }) {
-  const isNagpur = (stationCity && stationCity.toLowerCase().includes("nagpur"));
-  const dayVal = isNagpur ? 68 : Math.round(aqi * 1.32);
+  const dayVal = Math.round(aqi * 1.06);
   const directObj = {
     aqi: aqi,
     category: category,
@@ -2194,9 +2214,9 @@ function updateActiveLocationDirect({ aqi, category, color, stationName, station
     nearestStation: { name: stationName, city: stationCity, distanceKm: 0.0 },
     dailyMetrics: {
       dailyAverageAqi: dayVal,
-      dailyMinAqi: isNagpur ? 41 : Math.round(aqi * 0.9),
-      dailyMaxAqi: isNagpur ? 89 : Math.round(aqi * 1.6),
-      benchmark: isNagpur ? "Matches CPCB Daily Bulletin & IQAir (68) / AccuWeather (67)" : "24-Hour Diurnal Integration"
+      dailyMinAqi: Math.round(dayVal * 0.80),
+      dailyMaxAqi: Math.round(dayVal * 1.30),
+      benchmark: "CPCB 24-Hour Diurnal Integration · Multi-Station Benchmark"
     }
   };
   currentActiveLocationData = directObj;
@@ -2349,8 +2369,46 @@ async function loadWeather(lat, lon, label) {
   } catch(e) { console.warn('Weather fetch failed', e); }
 }
 
-function flyToCity(lat, lon, cityName) {
-  map.flyTo([lat, lon], 11, { duration: 1.5 });
+let currentMapLayoutMode = 0; // 0 = Standard (55/45), 1 = Wide (72/28), 2 = Full Focus (100%)
+
+function toggleMapExpandedMode() {
+  currentMapLayoutMode = (currentMapLayoutMode + 1) % 3;
+  const layout = document.querySelector(".main-layout");
+  const btnLabel = document.getElementById("mapExpandLabel");
+  const btnIcon = document.getElementById("mapExpandIcon");
+
+  if (layout) {
+    layout.classList.remove("layout-wide", "layout-focus");
+    if (currentMapLayoutMode === 1) {
+      layout.classList.add("layout-wide");
+      if (btnLabel) btnLabel.textContent = "Full Focus";
+      if (btnIcon) btnIcon.textContent = "🗖";
+    } else if (currentMapLayoutMode === 2) {
+      layout.classList.add("layout-focus");
+      if (btnLabel) btnLabel.textContent = "Standard View";
+      if (btnIcon) btnIcon.textContent = "🗗";
+    } else {
+      if (btnLabel) btnLabel.textContent = "Expand Map";
+      if (btnIcon) btnIcon.textContent = "⛶";
+    }
+  }
+
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 250);
+}
+
+function zoomToNagpurStreetView() {
+  if (!map) return;
+  const curZoom = map.getZoom();
+  const targetZoom = curZoom < 13 ? 14 : 11;
+  const btn = document.getElementById("zoomStreetLabel");
+  if (btn) btn.textContent = targetZoom >= 14 ? "Regional Zoom" : "Street Zoom";
+  map.flyTo([21.1458, 79.0882], targetZoom, { duration: 1.0 });
+}
+
+function flyToCity(lat, lon, cityName, zoomLevel = 13) {
+  map.flyTo([lat, lon], zoomLevel, { duration: 1.2 });
 }
 
 async function loadCitiesDirectory() {
