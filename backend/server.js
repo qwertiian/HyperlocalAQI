@@ -1252,6 +1252,189 @@ function computeBiometricInhalationDose(meanAqi, durationMinutes, mode, ageGroup
   };
 }
 
+// ━━━ 5. Clinical Route Health Advisory & Medical Countermeasures Engine ━━━
+// Generates actionable health checks, mask specifications, exertion guidance,
+// and clinical precautions differentiated by mode (driving, cycling, walking)
+// and corridor type (safest green parkway vs. high-congestion arterial).
+function computeRouteHealthAdvisory(routeType, mode, meanAqi, peakAqi, peakHotspot, cleanestSegment, distanceKm, durationMinutes, bioDose, ageGroup = "adult", healthFlags = {}) {
+  const isGreen = (routeType === "green");
+  const isArterial = (routeType === "arterial");
+  const isBypass = (routeType === "bypass");
+  const isCycling = (mode === "cycling");
+  const isWalking = (mode === "walking");
+  const isDriving = (mode === "driving");
+  const isVulnerable = !!(healthFlags.respiratory || healthFlags.asthma || healthFlags.cardiac || ageGroup === "child" || ageGroup === "elderly");
+
+  let riskTier = "LOW CLINICAL RISK";
+  let badgeText = "🌿 SAFEST ROUTE PROTOCOL";
+  let badgeColor = "#059669";
+  let summary = "";
+  let maskSpec = "";
+  let pacingAdvice = "";
+  let healthyChecks = [];
+  let recoveryProtocol = "";
+  let vulnerableAlert = "";
+
+  if (isCycling) {
+    if (isGreen) {
+      riskTier = "LOWEST INHALATION LOAD";
+      badgeText = "🚴 GREEN PARKWAY BIKE PROTOCOL";
+      badgeColor = "#059669";
+      summary = `Optimal low-inhalation cycling corridor. Shaded canopy and lakeside buffers reduce particulate intake to ${bioDose.totalInhaledMassUg} µg (~${bioDose.cigaretteEquivalent} cigs equiv.), shielding airway tissues during vigorous aerobic ventilation (40 L/min).`;
+      maskSpec = isVulnerable
+        ? "Sport N95 / FFP2 with exhalation valve (essential for sensitive airways)"
+        : (meanAqi > 100 ? "Sport KN95 / FFP1 mask recommended" : "Breathable sport dust mask or open nasal breathing in lake canopy sections");
+      pacingAdvice = "Aerobic tempo (65–75 RPM) is well-tolerated. Tree foliage captures ~22% ambient PM2.5, minimizing bronchial stress.";
+      healthyChecks = [
+        "💧 **Pre-Ride Hydration**: Drink 250ml water 15 min prior to departure to maintain mucosal barrier integrity.",
+        "🍃 **Canopy Respiration**: Deep rhythmic breathing permitted along " + (cleanestSegment || "green parkway buffers") + ".",
+        "⚠️ **Micro-Deceleration**: Ease off pedaling effort when approaching " + peakHotspot + " to curb minute ventilation by ~25%.",
+        "🚰 **Post-Ride Rinse**: Gargle with lukewarm water and flush face to clear airborne particulates from facial skin."
+      ];
+      recoveryProtocol = "Perform light upper-body stretches and hydrate with antioxidant fluids (lemon water / green tea) to assist oxidative clearance.";
+    } else if (isArterial) {
+      riskTier = "HIGH PULMONARY TOXICITY RISK";
+      badgeText = "⚠️ COMMERCIAL HIGHWAY CHOKE PROTOCOL";
+      badgeColor = "#ef4444";
+      summary = `CRITICAL ACTIVE TRANSIT WARNING: Cycling along congested highway arterial exposes lungs to ${bioDose.totalInhaledMassUg} µg PM2.5 (~${bioDose.cigaretteEquivalent} cigs equiv.). Rapid ventilation (40 L/min) pulls diesel soot and brake dust deep into unciliated alveolar sacs (${bioDose.alveolarDepositionUg} µg deposited).`;
+      maskSpec = "MANDATORY: High-filtration Sport N95 / FFP2 respirator with tight silicone perimeter seal and dual valves";
+      pacingAdvice = "SUPPRESS HYPERVENTILATION: Downshift to easier gears; cruise below 12 km/h to prevent gasping or open-mouth breathing.";
+      healthyChecks = [
+        "🛑 **Tailpipe Standoff**: Maintain minimum 12–15m buffer behind diesel buses, trucks, and three-wheelers at red lights.",
+        "👃 **Enforce Nasal Breathing**: Do not inhale through the mouth; nasal turbinates filter up to 60% of coarse particulates.",
+        "🚨 **Peak Choke Point**: Extreme street-canyon vortex entrapment (+28%) at " + peakHotspot + " — coast through with minimal cardiovascular effort.",
+        "🧴 **Immediate Airway Wash**: Flush nasal passages with isotonic saline spray within 20 minutes of arrival."
+      ];
+      recoveryProtocol = "Immediate saline nasal irrigation, warm salt water gargle, and steam inhalation to dislodge deposited diesel soot.";
+    } else {
+      riskTier = "ELEVATED ROAD DUST EXPOSURE";
+      badgeText = "🛣️ OUTER RING ROAD DIESEL & DUST PROTOCOL";
+      badgeColor = "#f59e0b";
+      summary = `Heavy commercial freight transit corridor. High truck turbulence resuspends coarse road dust and tailpipe particulates (${bioDose.totalInhaledMassUg} µg PM2.5 dose).`;
+      maskSpec = "Well-fitted N95 / KN95 mask with wrap-around dust/cycling glasses";
+      pacingAdvice = "Maintain steady cadence on designated outer lanes; avoid riding directly in the tire wash rut of heavy multi-axle freight vehicles.";
+      healthyChecks = [
+        "👓 **Eye & Airway Protection**: Wear protective cycling eyewear against airborne silica grit kicked up by heavy trucks.",
+        "🚰 **Continuous Hydration**: Drink fluids every 20 minutes along this " + distanceKm + " km route.",
+        "⚠️ **Plume Standoff**: Allow freight smoke plumes to clear before overtaking near " + peakHotspot + ".",
+        "🚿 **Airway Hygiene**: Thoroughly wash face, nostrils, and eyes with cool clean water post-ride."
+      ];
+      recoveryProtocol = "Nasal saline wash and rinse eyes with sterile saline drops to alleviate grit irritation.";
+    }
+  } else if (isWalking) {
+    if (isGreen) {
+      riskTier = "LOWEST INHALATION LOAD";
+      badgeText = "🚶 GREEN PARKWAY PEDESTRIAN PROTOCOL";
+      badgeColor = "#059669";
+      summary = `Highly therapeutic pedestrian corridor. Tree canopy foliage intercepts ~22% of micro-particulates, holding total inhaled dose to only ${bioDose.totalInhaledMassUg} µg PM2.5 over ${durationMinutes} minutes on foot.`;
+      maskSpec = isVulnerable
+        ? "N95 / FFP2 mask advised for asthmatics, children, and elderly"
+        : (meanAqi > 100 ? "3-Ply surgical mask or FFP1 recommended" : "Standard breathable 3-ply mask (clean canopy air promotes outdoor exercise)");
+      pacingAdvice = "Brisk walking permitted. Canopy shade shields against solar ground ozone synthesis and thermal exhaustion.";
+      healthyChecks = [
+        "🚶 **Inner Sidewalk Walking**: Walk along the park/building side of the footpath, farthest from motorized lanes.",
+        "💧 **Pre-Walk Water Intake**: Drink a glass of water before starting your " + distanceKm + " km walk.",
+        "🍃 **Deep Breathing**: Normal diaphragmatic breathing recommended in shaded lakefront & park segments.",
+        "🧼 **Facial Hygiene**: Wash face and hands with soap upon reaching your destination."
+      ];
+      recoveryProtocol = "Rest in well-ventilated indoor air; hydrate well.";
+    } else if (isArterial) {
+      riskTier = "SEVERE CURBSIDE POLLUTION RISK";
+      badgeText = "⚠️ COMMERCIAL ARTERIAL PEDESTRIAN PROTOCOL";
+      badgeColor = "#ef4444";
+      summary = `HIGH PEDESTRIAN HAZARD: Sidewalk commuters walk at direct vehicle exhaust height (1.2m–1.6m). Traffic choke points elevate exposure to ${bioDose.totalInhaledMassUg} µg PM2.5 with intense nitric oxide and black carbon intake.`;
+      maskSpec = "MANDATORY: Fitted N95 / FFP2 particulate respirator (loose cloth or single-ply surgical masks offer near-zero defense against sub-micron soot)";
+      pacingAdvice = "Moderate, steady pace. Avoid power-walking or running along congested curbsides to prevent hyperventilation.";
+      healthyChecks = [
+        "💨 **Upwind Sidewalk Selection**: Walk on the upwind side of the avenue where cross-winds disperse vehicle emissions.",
+        "🚦 **Intersection Standoff**: Stand at least 5m back from roadway curbs while waiting at pedestrian crossings.",
+        "⚠️ **Hotspot Alert**: Severe vortex entrapment (+28%) near " + peakHotspot + " — walk briskly past idling vehicle queues without lingering.",
+        "🧴 **Mucosal Decontamination**: Flush eyes and gargle with lukewarm salt water immediately after entering indoors."
+      ];
+      recoveryProtocol = "Isotonic nasal saline mist and warm water throat gargle to eliminate deposited particulate mass.";
+    } else {
+      riskTier = "MODERATE TO HIGH DUST LOAD";
+      badgeText = "🛣️ BYPASS CORRIDOR PEDESTRIAN PROTOCOL";
+      badgeColor = "#f59e0b";
+      summary = `Long pedestrian duration (${durationMinutes} min) along outer freight corridor exposes walkers to continuous dust re-suspension and truck emissions (${bioDose.totalInhaledMassUg} µg PM2.5).`;
+      maskSpec = "Certified N95 / KN95 particulate mask with secure nose clip";
+      pacingAdvice = "Keep a steady walking pace along sidewalks; avoid walking on unpaved dusty road shoulders.";
+      healthyChecks = [
+        "🚶 **Off-Curb Buffer**: Keep maximum possible distance from high-speed heavy commercial traffic lanes.",
+        "🚰 **Hydration Pack**: Carry a water bottle to prevent dry airway irritation over this " + distanceKm + " km walk.",
+        "🧼 **Post-Walk Hygiene**: Wash hands, face, and change outer shirt to avoid bringing particulate dust into indoor spaces."
+      ];
+      recoveryProtocol = "Nasal rinse and hydrate with clean water.";
+    }
+  } else {
+    // Driving
+    if (isGreen) {
+      riskTier = "MINIMAL CABIN INFILTRATION";
+      badgeText = "🚗 CLEAN PARKWAY TRANSIT PROTOCOL";
+      badgeColor = "#059669";
+      summary = `Cleanest vehicular transit corridor with minimal ambient particulate infiltration (${bioDose.totalInhaledMassUg} µg dose). Smooth traffic flow prevents idling exhaust spikes.`;
+      maskSpec = "No mask required inside vehicle with clean automotive cabin filter; surgical mask for two-wheeler / auto-rickshaw commuters";
+      pacingAdvice = "Smooth driving at steady speeds reduces stop-and-go brake wear and localized emissions.";
+      healthyChecks = [
+        "🍃 **Fresh Air Mode**: Fresh air ventilation mode permissible while traversing shaded lakefront and green buffer zones.",
+        "🚗 **Low Idling**: Route avoids central traffic choke points, preserving engine fuel efficiency and clean cabin air."
+      ];
+      recoveryProtocol = "Standard hydration upon arrival.";
+    } else if (isArterial) {
+      riskTier = "HIGH CABIN EXHAUST INFILTRATION";
+      badgeText = "🚗 COMMERCIAL CHOKE POINT CABIN PROTOCOL";
+      badgeColor = "#ef4444";
+      summary = `Stop-and-go congestion traps hot exhaust from leading vehicles, drawing high concentrations of fine PM2.5 and nitrogen dioxide into automotive ventilation systems (${bioDose.totalInhaledMassUg} µg dose).`;
+      maskSpec = "Keep car windows tightly sealed. If driving open two-wheeler or three-wheeler, N95 respirator is strictly mandatory.";
+      pacingAdvice = "Maintain smooth follow distance; avoid aggressive acceleration directly behind commercial diesel trucks and buses.";
+      healthyChecks = [
+        "🔄 **MANDATORY: Cabin Recirculation Mode**: Switch AC from 'Fresh Air' to 'Internal Recirculation' before approaching congested junctions.",
+        "🪟 **Keep Windows Closed**: Keep windows tightly shut, particularly near heavy bottlenecks around " + peakHotspot + ".",
+        "🌬️ **HEPA Cabin Filter**: Verify automotive cabin air filter is rated for particulate filtration and serviced every 10,000 km.",
+        "🛵 **Two-Wheeler Safety**: Open-air riders should wear wraparound goggles and an N95 mask against fly ash and black carbon."
+      ];
+      recoveryProtocol = "Open-air drivers should wash eyes and gargle after commute.";
+    } else {
+      riskTier = "ELEVATED DIESEL & DUST INFILTRATION";
+      badgeText = "🛣️ OUTER BYPASS CABIN PROTOCOL";
+      badgeColor = "#f59e0b";
+      summary = `High proportion of multi-axle freight vehicles along outer ring corridor produces elevated diesel soot and coarse tire abrasion dust (${bioDose.totalInhaledMassUg} µg PM2.5).`;
+      maskSpec = "Windows closed with AC on recirculation; N95 for two-wheeler / open vehicle commuters";
+      pacingAdvice = "Maintain safe trailing distance from heavy cargo haulers to avoid direct exhaust draft.";
+      healthyChecks = [
+        "🔄 **Internal Air Loop**: Keep vehicle climate control on recirculation mode.",
+        "🚚 **Avoid Truck Slipstreams**: Stay clear of open gravel / sand tippers without tarpaulins.",
+        "🛵 **Two-Wheeler Protection**: Use full-face helmet with visor down and fitted particulate mask."
+      ];
+      recoveryProtocol = "Rinse face and eyes post-commute.";
+    }
+  }
+
+  if (isVulnerable) {
+    if (healthFlags.respiratory || healthFlags.asthma) {
+      vulnerableAlert = "🚨 PULMONARY VULNERABILITY ALERT: Elevated risk of bronchospasm or wheezing. Asthmatic commuters must carry a fast-acting bronchodilator (salbutamol / albuterol inhaler). The Green Parkway route is clinically strongly recommended.";
+    } else if (healthFlags.cardiac) {
+      vulnerableAlert = "❤️ CARDIAC ALERT: Particulate exposure can trigger microvascular constriction and elevated arterial pressure. Avoid highway arterial routes; keep exertion strictly aerobic.";
+    } else if (ageGroup === "child") {
+      vulnerableAlert = "👶 PEDIATRIC VULNERABILITY: Children breathe more air per kilogram of body weight than adults. The Green Parkway route is essential to shield growing airway epithelium from diesel soot.";
+    } else if (ageGroup === "elderly") {
+      vulnerableAlert = "👵 SENIOR COMMUTER ALERT: Reduced respiratory reserve requires conservative pacing and avoidance of commercial highway choke points.";
+    }
+  }
+
+  return {
+    riskTier,
+    badgeText,
+    badgeColor,
+    summary,
+    maskSpec,
+    pacingAdvice,
+    healthyChecks,
+    recoveryProtocol,
+    vulnerableAlert
+  };
+}
+
 function evaluateRouteAqi(corridorData, type, mode, stations, weather, departureHour = null, ageGroup = "adult", healthFlags = {}) {
   const coords = Array.isArray(corridorData) ? corridorData : (corridorData.coordinates || []);
   const distKm = (corridorData && corridorData.distanceKm) ? corridorData.distanceKm : computePathDistanceKm(coords);
@@ -1365,6 +1548,11 @@ function evaluateRouteAqi(corridorData, type, mode, stations, weather, departure
   const greenScore = Math.max(10, Math.min(99, Math.round(100 - (meanAqi * 0.7) - (peakAqi - meanAqi) * 0.5)));
   const cat = getCategory(meanAqi);
 
+  // 6. Clinical Route Health Advisory & Medical Countermeasures
+  const healthAdvisory = computeRouteHealthAdvisory(
+    type, mode, meanAqi, peakAqi, peakHotspot, cleanestSegment, distKm, durationMin, bioDose, ageGroup, healthFlags
+  );
+
   return {
     distanceKm: distKm,
     durationMinutes: durationMin,
@@ -1379,6 +1567,7 @@ function evaluateRouteAqi(corridorData, type, mode, stations, weather, departure
     biometricDose: bioDose,
     diurnalAtmosphere: diurnal,
     greenScore,
+    healthAdvisory,
     coordinates: coords,
     steps: (corridorData && corridorData.steps) ? corridorData.steps : [],
     summary: (corridorData && corridorData.summary) ? corridorData.summary : null,
@@ -1937,6 +2126,7 @@ app.all("/api/nagpur/routes", async (req, res) => {
       diurnalAtmosphere: greenRoute.diurnalAtmosphere,
       greenScore: greenRoute.greenScore,
       exposureReductionPct: exposureReductionPct,
+      healthAdvisory: greenRoute.healthAdvisory,
       path: greenRoute.coordinates,
       steps: greenRoute.steps || [],
       waypoints: greenRoute.sampledWaypoints
@@ -1963,6 +2153,7 @@ app.all("/api/nagpur/routes", async (req, res) => {
       diurnalAtmosphere: arterialRoute.diurnalAtmosphere,
       greenScore: arterialRoute.greenScore,
       exposureReductionPct: 0,
+      healthAdvisory: arterialRoute.healthAdvisory,
       path: arterialRoute.coordinates,
       steps: arterialRoute.steps || [],
       waypoints: arterialRoute.sampledWaypoints
@@ -1989,6 +2180,7 @@ app.all("/api/nagpur/routes", async (req, res) => {
       diurnalAtmosphere: bypassRoute.diurnalAtmosphere,
       greenScore: bypassRoute.greenScore,
       exposureReductionPct: 0,
+      healthAdvisory: bypassRoute.healthAdvisory,
       path: bypassRoute.coordinates,
       steps: bypassRoute.steps || [],
       waypoints: bypassRoute.sampledWaypoints

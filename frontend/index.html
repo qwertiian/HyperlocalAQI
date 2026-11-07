@@ -843,6 +843,18 @@
           <button class="route-mode-pill" id="mode-walking" onclick="setRouteTravelMode('walking')">🚶 Walking</button>
         </div>
 
+        <!-- Commuter Health & Sensitivity Profile -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+          <span style="font-size:10px; font-weight:700; color:#475569; white-space:nowrap;">🩺 Health Profile:</span>
+          <select id="routeHealthProfileSelect" onchange="onRouteHealthProfileChange()" style="margin:0; padding:4px 6px; font-size:10px; font-weight:600; border-radius:8px; border:1px solid #cbd5e1; width:auto; flex:1;">
+            <option value="adult_general">👤 General Adult (Normal Exertion)</option>
+            <option value="asthma">🫁 Asthma / Respiratory Sensitive</option>
+            <option value="cardiac">❤️ Cardiovascular / High-Risk</option>
+            <option value="child">👶 Child / Pediatric (<12 yrs)</option>
+            <option value="elderly">👵 Senior Citizen (65+ yrs)</option>
+          </select>
+        </div>
+
         <!-- Dynamic Diurnal Atmospheric Departure Window -->
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
           <span style="font-size:10px; font-weight:700; color:#475569; white-space:nowrap;">🕒 Departure:</span>
@@ -1756,7 +1768,17 @@ async function calculateNagpurRoutes() {
   try {
     const depSelect = document.getElementById("routeDepartureSelect");
     const depHour = depSelect && depSelect.value !== "now" ? depSelect.value : "";
-    const url = `${API_BASE}/nagpur/routes?startLat=${routeOriginPoint.lat}&startLon=${routeOriginPoint.lon}&endLat=${routeDestPoint.lat}&endLon=${routeDestPoint.lon}&mode=${routeTravelMode}&startName=${encodeURIComponent(routeOriginPoint.name)}&destName=${encodeURIComponent(routeDestPoint.name)}${depHour ? `&departureHour=${depHour}` : ''}`;
+    const profSelect = document.getElementById("routeHealthProfileSelect");
+    const prof = profSelect ? profSelect.value : "adult_general";
+    let ageParam = "adult";
+    let isResp = false;
+    let isCard = false;
+    if (prof === "child") ageParam = "child";
+    else if (prof === "elderly") ageParam = "elderly";
+    else if (prof === "asthma") { isResp = true; }
+    else if (prof === "cardiac") { isCard = true; }
+
+    const url = `${API_BASE}/nagpur/routes?startLat=${routeOriginPoint.lat}&startLon=${routeOriginPoint.lon}&endLat=${routeDestPoint.lat}&endLon=${routeDestPoint.lon}&mode=${routeTravelMode}&startName=${encodeURIComponent(routeOriginPoint.name)}&destName=${encodeURIComponent(routeDestPoint.name)}${depHour ? `&departureHour=${depHour}` : ''}&ageGroup=${ageParam}&respiratory=${isResp}&cardiac=${isCard}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -1775,6 +1797,89 @@ async function calculateNagpurRoutes() {
     alert("Route calculation failed: " + e.message);
     if (btn) btn.innerHTML = `<span>🌱 Calculate Cleanest & Safe Routes</span>`;
   }
+}
+
+function onRouteHealthProfileChange() {
+  const sel = document.getElementById("routeHealthProfileSelect");
+  if (!sel) return;
+  const val = sel.value;
+  if (val === "asthma") {
+    condAsthma = true;
+    condCardiac = false;
+    currentAge = "adult";
+  } else if (val === "cardiac") {
+    condCardiac = true;
+    condAsthma = false;
+    currentAge = "adult";
+  } else if (val === "child") {
+    currentAge = "child";
+    condAsthma = false;
+    condCardiac = false;
+  } else if (val === "elderly") {
+    currentAge = "elderly";
+    condAsthma = false;
+    condCardiac = false;
+  } else {
+    currentAge = "adult";
+    condAsthma = false;
+    condCardiac = false;
+  }
+
+  // Synchronize with AI Health Advisor tab selectors
+  selectAge(currentAge);
+  const astBtn = document.getElementById("cond-asthma");
+  if (astBtn) astBtn.classList.toggle("active", condAsthma);
+  const cardBtn = document.getElementById("cond-cardiac");
+  if (cardBtn) cardBtn.classList.toggle("active", condCardiac);
+
+  // Auto-recalculate routes with updated clinical parameters
+  if (routeOriginPoint && routeDestPoint) {
+    calculateNagpurRoutes();
+  }
+}
+
+function toggleHealthChecks(routeId, event) {
+  if (event) event.stopPropagation();
+  const list = document.getElementById(`health-checks-${routeId}`);
+  const arrow = document.getElementById(`health-arrow-${routeId}`);
+  if (!list) return;
+  const isHidden = (list.style.display === "none" || !list.style.display);
+  list.style.display = isHidden ? "flex" : "none";
+  if (arrow) arrow.textContent = isHidden ? "▲" : "▼";
+}
+
+function openRouteInHealthAdvisor(routeId, event) {
+  if (event) event.stopPropagation();
+  if (!calculatedRoutesData) return;
+  const r = calculatedRoutesData.routes.find(x => x.id === routeId);
+  if (!r) return;
+
+  // 1. Populate AQI input with this route's mean AQI
+  const aqiIn = document.getElementById("aqiInput");
+  if (aqiIn) aqiIn.value = r.meanAqi;
+
+  // 2. Set location tag in AI Copilot
+  const tag = document.getElementById("copilotLocationTag");
+  if (tag) tag.textContent = `${r.name} (${routeTravelMode.toUpperCase()})`;
+
+  // 3. Map route travel mode to persona activity in AI Copilot
+  if (routeTravelMode === "cycling") {
+    selectActivity("athlete");
+  } else if (routeTravelMode === "walking") {
+    selectActivity("outdoor_worker");
+  } else {
+    selectActivity("sedentary");
+  }
+
+  // 4. Switch to AI Health Advisor tab
+  switchTab(null, "tab-copilot");
+
+  // 5. Trigger AI Advisory generation
+  generateAIAdvisory();
+
+  // 6. Smoothly scroll sidebar to advisory output
+  const sidebar = document.querySelector(".sidebar-panel");
+  if (sidebar) sidebar.scrollTo({ top: 320, behavior: "smooth" });
 }
 
 function toggleRouteSteps(routeId, event) {
@@ -1866,6 +1971,7 @@ function renderRoutesUI(data) {
     let borderClass = r.routeType === "green" ? "selected" : (r.routeType === "arterial" ? "arterial" : "bypass");
     const bio = r.biometricDose || {};
     const atm = r.diurnalAtmosphere || {};
+    const adv = r.healthAdvisory;
 
     return `
       <div class="route-card ${isSelected ? borderClass : ''}" id="card-${r.id}" onclick="selectActiveRoute('${r.id}')">
@@ -1916,6 +2022,62 @@ function renderRoutesUI(data) {
           <span>🍃 Cleanest: <b>${r.cleanestSegment}</b></span>
           <span>⚠️ Peak: <b>${r.peakHotspot}</b></span>
         </div>
+
+        <!-- Integrated Clinical Health Advisory & Medical Countermeasures -->
+        ${adv ? `
+          <div style="margin-top:6px; background:${r.routeType === 'green' ? 'rgba(236,253,245,0.92)' : (r.routeType === 'arterial' ? 'rgba(254,242,242,0.92)' : 'rgba(255,251,235,0.92)')}; border:1px solid ${r.routeType === 'green' ? 'rgba(16,185,129,0.35)' : (r.routeType === 'arterial' ? 'rgba(239,68,68,0.35)' : 'rgba(245,158,11,0.35)')}; border-radius:10px; padding:7px 9px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:10px; font-weight:800; color:${adv.badgeColor || '#059669'}; display:flex; align-items:center; gap:4px;">
+                <span>🩺</span> <span>${adv.badgeText || 'ROUTE HEALTH PROTOCOL'}</span>
+              </span>
+              <span style="font-size:8.5px; font-weight:800; color:white; background:${adv.badgeColor || '#059669'}; padding:1px 6px; border-radius:6px; text-transform:uppercase;">
+                ${adv.riskTier || 'ADVISORY'}
+              </span>
+            </div>
+
+            <div style="font-size:9.5px; color:#1e293b; line-height:1.4; margin-bottom:5px; font-weight:600;">
+              ${adv.summary}
+            </div>
+
+            <!-- Mask & Exertion Guidance -->
+            <div style="display:flex; flex-direction:column; gap:3px; background:rgba(255,255,255,0.85); border:1px solid rgba(226,232,240,0.8); border-radius:7px; padding:5px 7px; font-size:9px; color:#334155;">
+              <div style="display:flex; align-items:flex-start; gap:4px;">
+                <span style="font-weight:700; color:#2563eb; min-width:62px;">😷 Mask Spec:</span>
+                <span style="font-weight:600;">${adv.maskSpec}</span>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:4px;">
+                <span style="font-weight:700; color:#059669; min-width:62px;">🫁 Exertion:</span>
+                <span>${adv.pacingAdvice}</span>
+              </div>
+            </div>
+
+            <!-- Actionable Health Checks Drawer -->
+            <div style="margin-top:5px;">
+              <div onclick="toggleHealthChecks('${r.id}', event)" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:9.5px; font-weight:800; color:${r.routeType === 'green' ? '#047857' : (r.routeType === 'arterial' ? '#b91c1c' : '#b45309')};">
+                <span>📋 Actionable Checks & Implementations (${(adv.healthyChecks || []).length})</span>
+                <span id="health-arrow-${r.id}" style="font-size:9px;">▼</span>
+              </div>
+              <div id="health-checks-${r.id}" style="display:none; flex-direction:column; gap:3px; margin-top:4px; padding:6px; background:#ffffff; border-radius:8px; border:1px solid #cbd5e1; font-size:9px; color:#334155; line-height:1.35;">
+                ${(adv.healthyChecks || []).map(chk => `<div style="padding:2px 0; border-bottom:1px dashed #f1f5f9;">${chk}</div>`).join('')}
+                ${adv.recoveryProtocol ? `<div style="margin-top:3px; font-weight:700; color:#4338ca;">🧴 <b>Recovery Protocol:</b> ${adv.recoveryProtocol}</div>` : ''}
+              </div>
+            </div>
+
+            ${adv.vulnerableAlert ? `
+              <div style="margin-top:5px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:4px 6px; font-size:9px; color:#b91c1c; font-weight:700; line-height:1.3;">
+                ${adv.vulnerableAlert}
+              </div>
+            ` : ''}
+
+            <!-- 1-Click Launch into AI Pulmonology Advisor -->
+            <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:8.5px; color:#64748b; font-weight:600;">Personalized for ${routeTravelMode.toUpperCase()} mode</span>
+              <button onclick="openRouteInHealthAdvisor('${r.id}', event)" style="background:linear-gradient(135deg, #7c3aed, #6366f1); color:white; border:none; padding:3px 9px; border-radius:6px; font-size:9px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(124,58,237,0.3); transition:all 0.15s ease;">
+                <span>🩺 Consult AI Copilot</span> <span>➔</span>
+              </button>
+            </div>
+          </div>
+        ` : ''}
 
         <!-- Google Maps-style Clickable Turn-by-Turn Steps -->
         ${(r.steps && r.steps.length > 0) ? `
